@@ -40,6 +40,7 @@ interface FlowState {
   setEditingNodeId: (nodeId: string | null) => void;
   setDeletingNodeId: (nodeId: string | null) => void;
   updateNodeContent: (nodeId: string, label: string) => void;
+  updateNodeThinking: (nodeId: string, thinking: boolean) => void;
   loadProjectData: (projectId: string) => Promise<void>;
   clearData: () => void;
 }
@@ -221,6 +222,16 @@ export const useFlowStore = create<FlowState>((set, get) => ({
       nodes: get().nodes.map((node) => 
         node.id === nodeId 
           ? { ...node, data: { ...node.data, label } } 
+          : node
+      ),
+    });
+  },
+
+  updateNodeThinking: (nodeId: string, thinking: boolean) => {
+    set({
+      nodes: get().nodes.map((node) => 
+        node.id === nodeId 
+          ? { ...node, data: { ...node.data, thinking } } 
           : node
       ),
     });
