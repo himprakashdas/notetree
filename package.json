@@ -1,0 +1,14 @@
+{
+  "name": "notetree",
+  "version": "0.1.0",
+  "description": "A contextual hierarchical learning interface for LLMs",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
