@@ -117,16 +117,16 @@ const FlowCanvasInternal = () => {
   }
 
   return (
-    <div className={`w-full h-full bg-black relative ${(isEditing || isDeleting) ? 'overflow-hidden' : ''}`}>
+    <div className={`w-full h-full bg-background relative ${(isEditing || isDeleting) ? 'overflow-hidden' : ''}`}>
       {/* HUD - Top Left */}
-      <div className={`absolute top-4 left-4 z-10 flex gap-4 items-center transition-opacity duration-300 ${(isEditing || isDeleting) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`absolute top-6 left-6 z-10 flex gap-4 items-center transition-opacity duration-300 ${(isEditing || isDeleting) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <div className="flex items-center gap-2 pr-4 border-r border-zinc-800">
           <img src="/favicon.png" alt="Logo" className="w-6 h-6" />
-          <span className="font-bold text-rose-500 tracking-tight">NoteTree</span>
+          <span className="font-bold text-rose-500 tracking-tight select-none">NoteTree</span>
         </div>
         <button
           onClick={handleBack}
-          className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-md transition-colors text-sm font-medium"
+          className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/50 backdrop-blur-md border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-lg transition-colors text-sm font-medium shadow-xl"
         >
           <ChevronLeft className="w-4 h-4" />
           Back to Gallery
@@ -134,10 +134,10 @@ const FlowCanvasInternal = () => {
       </div>
 
       {/* HUD - Bottom Left */}
-      <div className={`absolute bottom-4 left-4 z-10 flex gap-2 transition-opacity duration-300 ${(isEditing || isDeleting) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`absolute bottom-6 left-6 z-10 flex gap-2 transition-opacity duration-300 ${(isEditing || isDeleting) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button
           onClick={() => fitView({ duration: 800 })}
-          className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-md transition-colors text-sm font-medium shadow-xl"
+          className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/50 backdrop-blur-md border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-lg transition-colors text-sm font-medium shadow-xl"
           title="Fit to View"
         >
           <Maximize className="w-4 h-4" />

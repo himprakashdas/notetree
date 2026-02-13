@@ -11,7 +11,7 @@ function App() {
   }
 
   return (
-    <div className="w-screen h-screen bg-black text-white">
+    <div className="w-full h-full bg-background text-white">
       <FlowCanvas />
     </div>
   );
