@@ -14,6 +14,7 @@ export const projectRepository = {
       name,
       createdAt: now,
       lastModified: now,
+      systemPrompt: 'You are a helpful creative writing assistant that helps brainstorm and organize ideas in a tree structure.',
     };
     await db.projects.add(project);
     return project;

@@ -5,6 +5,7 @@ export interface Project {
   name: string;
   createdAt: number;
   lastModified: number;
+  systemPrompt: string;
 }
 
 export interface NodeData extends Record<string, unknown> {
