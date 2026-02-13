@@ -13,6 +13,7 @@ import { ChevronLeft, Plus, Maximize } from 'lucide-react';
 
 import { useFlowStore } from '../../store/useFlowStore';
 import { useAppStore } from '../../store/useAppStore';
+import { useHotkeys } from '../../hooks/useHotkeys';
 import ChatNode from './ChatNode';
 import { NoteTreeNode } from '../../types';
 
@@ -32,6 +33,9 @@ const FlowCanvasInternal = () => {
 
   const { setActiveProject } = useAppStore();
   const { fitView, setCenter } = useReactFlow();
+
+  // Initialize keyboard shortcuts
+  useHotkeys();
 
   const startChat = useCallback(() => {
     const newNode: NoteTreeNode = {
