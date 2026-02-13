@@ -1,8 +1,8 @@
 # Project State: NoteTree
 
 ## Current Phase: Phase 1 (Foundation)
-**Status**: Executing Plan 04
-**Progress**: 3/5 Plans
+**Status**: Executing Plan 05
+**Progress**: 4/5 Plans
 **Goal**: Establish the infinite canvas and persistence foundation.
 
 ## Completed Milestones
@@ -14,12 +14,14 @@
 - [x] Project Foundation & Persistence Setup (Plan 01).
 - [x] Infinite Canvas & Custom Nodes (Plan 02).
 - [x] Interaction & Branching (Plan 03).
+- [x] Chat Overlay & Sync (Plan 04).
 
 ## Active Tasks
 - [x] Initialize Vite + React project.
 - [x] Scaffold React Flow + Zustand integration (Plan 01/02).
 - [x] Implement Branching & Tree Logic (Plan 03).
-- [ ] Implement Sliding Window Context Inheritance (Plan 04).
+- [x] Implement Sliding Window Context Inheritance (Plan 04).
+- [ ] Adaptive Sliding Context & Final Polish (Plan 05).
 
 ## Decisions
 - [x] Use Tailwind 4 for CSS-first styling.
@@ -29,6 +31,8 @@
 - [x] [Phase 1]: Use a Rose-themed (rose-500) border for AI nodes and Neutral for User nodes.
 - [x] [Phase 1]: Use React Flow's 'setCenter' for smooth auto-panning to new nodes.
 - [x] [Phase 1]: Implement canvas shortcuts (Delete, Cmd+Enter) via native event listeners in a custom hook.
+- [x] [Phase 1]: Use 300ms debounced persistence to IndexedDB for every keystroke auto-save.
+- [x] [Phase 1]: Implement foreground ChatOverlay with backdrop blur to isolate node editing.
 
 ## Context Memory
 - **Root Concept**: Tree-based LLM interaction to solve linear fatigue.
@@ -38,4 +42,4 @@
 
 ## Session Info
 - **Last session**: 2024-02-13
-- **Stopped at**: Completed Phase 1 Plan 03
+- **Stopped at**: Completed Phase 1 Plan 04
