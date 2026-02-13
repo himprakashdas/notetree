@@ -43,3 +43,5 @@ next-env.d.ts
 .agent/
 brain/
 logs/
+GEMINI.md
+gemini.md
