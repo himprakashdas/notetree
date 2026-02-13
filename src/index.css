@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  --color-rose-500: #F43F5E;
+  
+  --color-primary: var(--color-rose-500);
+  --color-background: #000000;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-white;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  }
+}
+
+:root {
+  background-color: black;
+  color: white;
+}
