@@ -1,5 +1,13 @@
 import { NoteTreeNode, NoteTreeEdge } from '../types';
 import { projectRepository } from '../db/repository';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const genAI = new GoogleGenerativeAI(API_KEY);
+
+export const getGeminiModel = (modelName = "gemini-2.0-flash") => {
+  return genAI.getGenerativeModel({ model: modelName });
+};
 
 export interface GeminiMessage {
   role: 'user' | 'model';
