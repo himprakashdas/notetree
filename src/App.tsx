@@ -21,7 +21,7 @@ function App() {
           </div>
         )}
       </main>
-      <Toaster position="top-right" richColors />
+      <Toaster position="top-right" richColors closeButton />
     </div>
   );
 }

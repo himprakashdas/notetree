@@ -4,6 +4,7 @@ import { useFlowStore } from './useFlowStore';
 import { projectRepository } from '../db/repository';
 import { useAppStore } from './useAppStore';
 import { toast } from 'sonner';
+import { getReadableErrorMessage } from '../utils/errorMessages';
 
 interface QueueItem {
   nodeId: string;
@@ -188,14 +189,14 @@ export const useAIStore = create<AIState>((set, get) => ({
           const isQuotaError = error.status === 429 || errorMessage.toLowerCase().includes('quota');
 
           if (isAuthError) {
-            toast.error("Invalid API Key. Please check your settings.", { duration: 10000 });
+            toast.error(getReadableErrorMessage('Invalid API key'), { duration: 5000 });
             useFlowStore.getState().updateNodeThinking(nodeId, false);
             useFlowStore.getState().deleteNodeOnly(nodeId);
             break;
           }
 
           if (isQuotaError) {
-            toast.error("API Quota exceeded. Please try again later.", { duration: 10000 });
+            toast.error(getReadableErrorMessage('API quota exceeded'), { duration: 5000 });
             useFlowStore.getState().updateNodeThinking(nodeId, false);
             useFlowStore.getState().deleteNodeOnly(nodeId);
             break;
@@ -217,7 +218,7 @@ export const useAIStore = create<AIState>((set, get) => ({
             retryCount++;
           } else {
             // Final failure
-            toast.error(`Failed to generate response: ${errorMessage}`, { duration: 10000 });
+            toast.error(getReadableErrorMessage(error), { duration: 5000 });
             useFlowStore.getState().updateNodeThinking(nodeId, false);
             useFlowStore.getState().deleteNodeOnly(nodeId);
             break;
