@@ -1,5 +1,5 @@
 import { db } from './schema';
-import { Project } from '../types';
+import { Project, NoteTreeNode, NoteTreeEdge, DBNode, DBEdge } from '../types';
 import { nanoid } from 'nanoid';
 
 export const projectRepository = {
@@ -32,5 +32,29 @@ export const projectRepository = {
       ...updates,
       lastModified: Date.now(),
     });
+  },
+
+  // Node & Edge persistence
+  async saveNodes(projectId: string, nodes: NoteTreeNode[]) {
+    const dbNodes: DBNode[] = nodes.map(node => ({
+      ...node,
+      projectId
+    }));
+    return db.nodes.bulkPut(dbNodes);
+  },
+
+  async saveEdges(projectId: string, edges: NoteTreeEdge[]) {
+    const dbEdges: DBEdge[] = edges.map(edge => ({
+      ...edge,
+      projectId
+    }));
+    return db.edges.bulkPut(dbEdges);
+  },
+
+  async getProjectData(projectId: string) {
+    const nodes = await db.nodes.where('projectId').equals(projectId).toArray();
+    const edges = await db.edges.where('projectId').equals(projectId).toArray();
+    return { nodes, edges };
   }
 };
+
