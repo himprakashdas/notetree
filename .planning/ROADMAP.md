@@ -2,11 +2,12 @@
 
 ## Phase 1: Foundation (Infinite Canvas & Persistence)
 *Goal: Establish the visual workspace and local data storage.*
-- [ ] Setup Vite + React + TypeScript environment.
-- [ ] Integrate React Flow with Zustand for flat DAG state management.
-- [ ] Implement IndexedDB persistence using Dexie.js (Nodes and Edges).
-- [ ] Create basic Node UI (Text editing, placeholder for AI response).
-- [ ] Implement Pan/Zoom and basic "Add Node" functionality.
+**Plans:** 5 plans
+- [ ] phase-1-01-PLAN.md — Setup environment, Dexie, and flat-mapped Zustand store.
+- [ ] phase-1-02-PLAN.md — Implement React Flow canvas and custom ChatNode.
+- [ ] phase-1-03-PLAN.md — Core branching interaction and auto-pan logic.
+- [ ] phase-1-04-PLAN.md — Chat overlay modal and real-time auto-save.
+- [ ] phase-1-05-PLAN.md — Project Gallery and advanced node deletion.
 
 ## Phase 2: Core AI Integration (Branching & Context)
 *Goal: Enable the core "Tree Learning" value proposition.*
