@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { X, Send } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { X, Send, Code, FileText } from 'lucide-react';
 import { useReactFlow } from '@xyflow/react';
 import { useFlowStore } from '../../store/useFlowStore';
 import { useAppStore } from '../../store/useAppStore';
@@ -16,6 +16,8 @@ const ChatOverlay = () => {
   const editingNode = nodes.find((n) => n.id === editingNodeId);
   const isUser = editingNode?.data.type === 'user';
   const hasContent = (editingNode?.data.label?.trim().length ?? 0) > 0;
+
+  const [showMarkdown, setShowMarkdown] = useState(true);
 
   useEffect(() => {
     if (editingNodeId && textareaRef.current) {
@@ -94,6 +96,17 @@ const ChatOverlay = () => {
           </div>
 
           <div className="flex items-center gap-4">
+            {!isUser && (
+              <Tooltip content={showMarkdown ? 'Show raw text' : 'Show markdown'} position="bottom">
+                <button
+                  onClick={() => setShowMarkdown(!showMarkdown)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition-colors text-xs font-medium"
+                >
+                  {showMarkdown ? <Code className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
+                  {showMarkdown ? 'Raw' : 'Markdown'}
+                </button>
+              </Tooltip>
+            )}
             <div className="flex items-center bg-black border border-zinc-800 rounded-lg p-0.5">
               {(['small', 'medium', 'large'] as const).map((size) => (
                 <Tooltip key={size} content={`${size.charAt(0).toUpperCase() + size.slice(1)} Text`} position="bottom">
@@ -140,11 +153,17 @@ const ChatOverlay = () => {
               className={`w-full h-full bg-transparent text-zinc-100 ${fontClasses[fontSize]} leading-relaxed resize-none focus:outline-none placeholder:text-zinc-700`}
             />
           ) : (
-            <div className={`markdown-content text-zinc-100 ${fontClasses[fontSize]} leading-relaxed`}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            showMarkdown ? (
+              <div className={`markdown-content text-zinc-100 ${fontClasses[fontSize]} leading-relaxed`}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {editingNode.data.label}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <pre className={`text-zinc-300 ${fontClasses[fontSize]} leading-relaxed font-mono whitespace-pre-wrap`}>
                 {editingNode.data.label}
-              </ReactMarkdown>
-            </div>
+              </pre>
+            )
           )}
         </div>
 
