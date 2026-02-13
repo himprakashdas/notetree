@@ -1,10 +1,12 @@
 <p align="center">
-  <img src="notetree-logos/Complete-logo.png" alt="NoteTree Logo" width="600">
+  <img src="public/full-logo.png" alt="NoteTree Logo" width="600">
 </p>
 
 # NoteTree
 
 Think of NoteTree as a mind map for conversations with AI. Instead of scrolling through endless chat history, you organize your thoughts in a tree structure where each branch is its own conversation thread.
+
+![NoteTree Screenshot](public/screenshot.jpeg)
 
 ## What is this?
 
@@ -47,7 +49,7 @@ pnpm install
 
 # Set up your environment
 cp .env.example .env
-# Edit .env and add your API keys (Gemini, OpenAI, etc.)
+# Edit .env and add your Gemini API key
 
 # Run the development server
 pnpm dev
@@ -68,7 +70,7 @@ The app should now be running at `http://localhost:5173` (or whatever port Vite 
 - **Tree-based conversation structure** - Organize your thoughts hierarchically
 - **Context inheritance** - Each node knows its full conversation history
 - **Branch isolation** - Explore different ideas without cross-contamination
-- **Multiple AI providers** - Works with Gemini, OpenAI, and others
+- **Gemini AI integration** - Powered by Google's Gemini AI
 - **Local storage** - Your conversations are saved locally
 - **Clean up tools** - Remove empty nodes, format the tree, and keep things organized
 
