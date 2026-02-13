@@ -2,7 +2,7 @@
 
 ## Current Phase: Phase 1.1 (Refined Foundation & Interactions)
 **Status**: In Progress
-**Progress**: 1/3 Plans
+**Progress**: 2/3 Plans
 **Goal**: Align the UI and node model with the atomic turn-based refinement and fix layout grounding.
 
 ## Completed Milestones
@@ -13,9 +13,9 @@
 - [x] High-level roadmap established.
 - [x] Phase 1: Foundation (Plans 01-05 completed).
 - [x] Phase 1.1 Plan 01: Foundation Logic & HUD.
+- [x] Phase 1.1 Plan 02: Interaction UI Refinement.
 
 ## Active Tasks
-- [ ] Implement Triple-Action Hover Bar (Plan 1.1-01).
 - [ ] Implement Role-specific Branching & Thinking state (Plan 1.1-02).
 - [ ] Refine Text Truncation & Resizing Constraints (Plan 1.1-03).
 - [ ] Add Top-Right Role Toggle & UI Polishing (Plan 1.1-04).
@@ -33,10 +33,13 @@
 - [Phase 1.1]: Adopted atomic turn-based model (User -> AI child, AI -> User child).
 - [Phase 1.1]: '+' button creates a sibling by default (same role), offset X+300.
 - [Phase 1.1]: Role Toggle in HUD acts as a creation override for the next node.
+- [Phase 1.1]: Implemented Triple-Action Hover Bar: Delete, Plus, Send.
+- [Phase 1.1]: Plus button on AI nodes creates User child by default (Reply flow).
 
 ## Performance Metrics
 - **Phase 1.1 Plan 01**: 25m, 3 tasks, 4 files.
+- **Phase 1.1 Plan 02**: 15m, 2 tasks, 2 files.
 
 ## Session Info
 - **Last session**: 2026-02-13
-- **Stopped at**: Completed Phase 1.1 Plan 01
+- **Stopped at**: Completed Phase 1.1 Plan 02
