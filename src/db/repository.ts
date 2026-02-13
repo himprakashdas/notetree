@@ -58,12 +58,17 @@ export const projectRepository = {
     return { nodes, edges };
   },
 
-  async getAIContext(projectId: string, parentNodeId: string): Promise<{ systemPrompt: string; contextNodes: NoteTreeNode[] }> {
+  async getAIContext(
+    projectId: string, 
+    parentNodeId: string, 
+    providedNodes?: NoteTreeNode[], 
+    providedEdges?: NoteTreeEdge[]
+  ): Promise<{ systemPrompt: string; contextNodes: NoteTreeNode[] }> {
     const project = await db.projects.get(projectId);
     if (!project) throw new Error('Project not found');
 
-    const allNodes = await db.nodes.where('projectId').equals(projectId).toArray() as NoteTreeNode[];
-    const allEdges = await db.edges.where('projectId').equals(projectId).toArray();
+    const allNodes = providedNodes || await db.nodes.where('projectId').equals(projectId).toArray() as NoteTreeNode[];
+    const allEdges = (providedEdges || await db.edges.where('projectId').equals(projectId).toArray()) as NoteTreeEdge[];
 
     const nodeMap = new Map(allNodes.map(n => [n.id, n]));
     const parentToChildren = new Map<string, string[]>();

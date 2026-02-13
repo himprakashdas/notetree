@@ -1,4 +1,4 @@
-import { NoteTreeNode } from '../types';
+import { NoteTreeNode, NoteTreeEdge } from '../types';
 import { projectRepository } from '../db/repository';
 
 export interface GeminiMessage {
@@ -58,8 +58,13 @@ export function formatPrompt(systemPrompt: string, contextNodes: NoteTreeNode[])
 /**
  * Creates a snapshot of the context for a given node.
  */
-export async function createContextSnapshot(projectId: string, nodeId: string): Promise<ContextSnapshot> {
-  const { systemPrompt, contextNodes } = await projectRepository.getAIContext(projectId, nodeId);
+export async function createContextSnapshot(
+  projectId: string, 
+  nodeId: string, 
+  nodes?: NoteTreeNode[], 
+  edges?: NoteTreeEdge[]
+): Promise<ContextSnapshot> {
+  const { systemPrompt, contextNodes } = await projectRepository.getAIContext(projectId, nodeId, nodes, edges);
   
   return {
     systemPrompt,

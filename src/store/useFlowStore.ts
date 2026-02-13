@@ -126,7 +126,7 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     // If AI node, enqueue for generation
     const projectId = useAppStore.getState().activeProject?.id;
     if (projectId && role === 'ai') {
-      createContextSnapshot(projectId, actualParentId).then(snapshot => {
+      createContextSnapshot(projectId, actualParentId, get().nodes, get().edges).then(snapshot => {
         useAIStore.getState().enqueue(newNodeId, snapshot);
       });
     }
@@ -171,7 +171,7 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     // Enqueue for generation
     const projectId = useAppStore.getState().activeProject?.id;
     if (projectId) {
-      createContextSnapshot(projectId, parentId).then(snapshot => {
+      createContextSnapshot(projectId, parentId, get().nodes, get().edges).then(snapshot => {
         useAIStore.getState().enqueue(newNodeId, snapshot);
       });
     }
