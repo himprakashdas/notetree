@@ -1,8 +1,8 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Handle, Position, NodeProps, useReactFlow, NodeResizer } from '@xyflow/react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { Plus, Trash2, Send, Square } from 'lucide-react';
+import { Plus, Trash2, Send, Square, FileText, Code } from 'lucide-react';
 import { NoteTreeNode } from '../../types';
 import { useFlowStore } from '../../store/useFlowStore';
 import { useAIStore } from '../../store/useAIStore';
@@ -19,6 +19,8 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
   const stopGeneration = useAIStore((state) => state.stopGeneration);
   const fontSize = useAppStore((state) => state.fontSize);
   const { setCenter } = useReactFlow();
+
+  const [showMarkdown, setShowMarkdown] = useState(true);
 
   const handleAddBranch = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -80,27 +82,50 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
           className="w-2 h-2 !bg-zinc-600 border-none"
         />
 
-        <div className="text-[10px] uppercase tracking-wider font-bold text-zinc-500 mb-1 shrink-0">
-          {isUser ? 'User' : 'Assistant'}
+        <div className="flex items-center justify-between mb-1 shrink-0">
+          <div className="text-[10px] uppercase tracking-wider font-bold text-zinc-500">
+            {isUser ? 'User' : 'Assistant'}
+          </div>
+          {!isUser && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMarkdown(!showMarkdown);
+              }}
+              className="p-1 rounded hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors"
+              title={showMarkdown ? 'Show raw text' : 'Show markdown'}
+            >
+              {showMarkdown ? <Code className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
+            </button>
+          )}
         </div>
 
         <div className={twMerge(
-          "flex-grow whitespace-pre-wrap overflow-y-auto custom-scrollbar pr-1 markdown-content nowheel",
-          fontSize === 'small' ? 'text-xs' : fontSize === 'large' ? 'text-base' : 'text-sm'
+          "flex-grow whitespace-pre-wrap overflow-y-auto custom-scrollbar pr-1 nowheel",
+          fontSize === 'small' ? 'text-xs' : fontSize === 'large' ? 'text-base' : 'text-sm',
+          showMarkdown && 'markdown-content'
         )}>
           {data.thinking ? (
             <div className="flex flex-col gap-2">
               <span className="italic text-zinc-500 animate-pulse">Thinking...</span>
               {data.label && (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {data.label}
-                </ReactMarkdown>
+                showMarkdown ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {data.label}
+                  </ReactMarkdown>
+                ) : (
+                  <pre className="font-mono text-zinc-400">{data.label}</pre>
+                )
               )}
             </div>
           ) : (
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {data.label || ''}
-            </ReactMarkdown>
+            showMarkdown ? (
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {data.label || ''}
+              </ReactMarkdown>
+            ) : (
+              <pre className="font-mono text-zinc-400">{data.label || ''}</pre>
+            )
           )}
         </div>
 
