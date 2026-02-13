@@ -14,10 +14,13 @@ import {
 } from '@xyflow/react';
 import { nanoid } from 'nanoid';
 import { NoteTreeNode, NoteTreeEdge } from '../types';
+import { projectRepository } from '../db/repository';
 
 interface FlowState {
   nodes: NoteTreeNode[];
   edges: NoteTreeEdge[];
+  editingNodeId: string | null;
+  isLoading: boolean;
   onNodesChange: OnNodesChange<NoteTreeNode>;
   onEdgesChange: OnEdgesChange<NoteTreeEdge>;
   onConnect: OnConnect;
@@ -26,11 +29,17 @@ interface FlowState {
   addNode: (node: NoteTreeNode) => void;
   addChildNode: (parentId: string) => NoteTreeNode | undefined;
   deleteNode: (nodeId: string) => void;
+  setEditingNodeId: (nodeId: string | null) => void;
+  updateNodeContent: (nodeId: string, label: string) => void;
+  loadProjectData: (projectId: string) => Promise<void>;
+  clearData: () => void;
 }
 
 export const useFlowStore = create<FlowState>((set, get) => ({
   nodes: [],
   edges: [],
+  editingNodeId: null,
+  isLoading: false,
   onNodesChange: (changes: NodeChange<NoteTreeNode>[]) => {
     set({
       nodes: applyNodeChanges(changes, get().nodes),
@@ -42,8 +51,9 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     });
   },
   onConnect: (connection: Connection) => {
+    const newEdges = addEdge(connection, get().edges);
     set({
-      edges: addEdge(connection, get().edges),
+      edges: newEdges as NoteTreeEdge[],
     });
   },
   setNodes: (nodes) => set({ nodes }),
@@ -94,4 +104,33 @@ export const useFlowStore = create<FlowState>((set, get) => ({
       ),
     });
   },
+
+  setEditingNodeId: (nodeId: string | null) => set({ editingNodeId: nodeId }),
+
+  updateNodeContent: (nodeId: string, label: string) => {
+    set({
+      nodes: get().nodes.map((node) => 
+        node.id === nodeId 
+          ? { ...node, data: { ...node.data, label } } 
+          : node
+      ),
+    });
+  },
+
+  loadProjectData: async (projectId: string) => {
+    set({ isLoading: true });
+    try {
+      const { nodes, edges } = await projectRepository.getProjectData(projectId);
+      set({ 
+        nodes: nodes as NoteTreeNode[], 
+        edges: edges as NoteTreeEdge[], 
+        isLoading: false 
+      });
+    } catch (error) {
+      console.error('Failed to load project data:', error);
+      set({ isLoading: false });
+    }
+  },
+
+  clearData: () => set({ nodes: [], edges: [], editingNodeId: null }),
 }));

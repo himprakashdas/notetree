@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { 
   ReactFlow, 
   Background, 
@@ -9,12 +9,14 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { nanoid } from 'nanoid';
-import { ChevronLeft, Plus, Maximize } from 'lucide-react';
+import { ChevronLeft, Plus, Maximize, Loader2 } from 'lucide-react';
 
 import { useFlowStore } from '../../store/useFlowStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useHotkeys } from '../../hooks/useHotkeys';
+import { usePersistence } from '../../hooks/usePersistence';
 import ChatNode from './ChatNode';
+import ChatOverlay from '../chat/ChatOverlay';
 import { NoteTreeNode } from '../../types';
 
 const nodeTypes: NodeTypes = {
@@ -28,18 +30,42 @@ const FlowCanvasInternal = () => {
     onNodesChange, 
     onEdgesChange, 
     onConnect,
-    addNode 
+    addNode,
+    setEditingNodeId,
+    editingNodeId,
+    isLoading,
+    loadProjectData,
+    clearData
   } = useFlowStore();
 
-  const { setActiveProject } = useAppStore();
+  const { activeProject, setActiveProject } = useAppStore();
+  const activeProjectId = activeProject?.id;
   const { fitView, setCenter } = useReactFlow();
 
-  // Initialize keyboard shortcuts
+  // Initialize keyboard shortcuts and persistence
   useHotkeys();
+  usePersistence();
+
+  // Load project data on mount or when activeProjectId changes
+  useEffect(() => {
+    if (activeProjectId) {
+      loadProjectData(activeProjectId);
+    }
+  }, [activeProjectId, loadProjectData]);
+
+  const onNodeClick = useCallback((_: React.MouseEvent, node: NoteTreeNode) => {
+    setEditingNodeId(node.id);
+  }, [setEditingNodeId]);
+
+  const handleBack = useCallback(() => {
+    setActiveProject(null);
+    clearData();
+  }, [setActiveProject, clearData]);
 
   const startChat = useCallback(() => {
+    const newNodeId = nanoid();
     const newNode: NoteTreeNode = {
-      id: nanoid(),
+      id: newNodeId,
       type: 'chatNode',
       position: { x: 0, y: 0 },
       data: { 
@@ -56,12 +82,25 @@ const FlowCanvasInternal = () => {
     }, 50);
   }, [addNode, setCenter]);
 
+  const isEditing = !!editingNodeId;
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-rose-500 animate-spin" />
+          <p className="text-zinc-500 animate-pulse">Loading your tree...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full h-full bg-black relative">
+    <div className={`w-full h-full bg-black relative ${isEditing ? 'overflow-hidden' : ''}`}>
       {/* HUD - Top Left */}
-      <div className="absolute top-4 left-4 z-10 flex gap-2">
+      <div className={`absolute top-4 left-4 z-10 flex gap-2 transition-opacity duration-300 ${isEditing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button
-          onClick={() => setActiveProject(null)}
+          onClick={handleBack}
           className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-md transition-colors text-sm font-medium"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -70,7 +109,7 @@ const FlowCanvasInternal = () => {
       </div>
 
       {/* HUD - Bottom Left */}
-      <div className="absolute bottom-4 left-4 z-10 flex gap-2">
+      <div className={`absolute bottom-4 left-4 z-10 flex gap-2 transition-opacity duration-300 ${isEditing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button
           onClick={() => fitView({ duration: 800 })}
           className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-md transition-colors text-sm font-medium shadow-xl"
@@ -87,12 +126,18 @@ const FlowCanvasInternal = () => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
         fitView
         nodesConnectable={false}
         edgesReconnectable={false}
-        elementsSelectable={true}
+        elementsSelectable={!isEditing}
+        nodesDraggable={!isEditing}
+        panOnDrag={!isEditing}
+        zoomOnScroll={!isEditing}
         colorMode="dark"
+        paneClickDistance={5}
+        deleteKeyCode={null} // Handled by useHotkeys
       >
         <Background 
           variant={BackgroundVariant.Dots} 
@@ -114,6 +159,8 @@ const FlowCanvasInternal = () => {
           </button>
         </div>
       )}
+
+      <ChatOverlay />
     </div>
   );
 };
