@@ -12,9 +12,9 @@
 ## Phase 1.1: Refined Foundation & Interactions
 *Goal: Align the UI and node model with the atomic turn-based refinement.*
 **Plans:** 3 plans
-- [ ] phase-1.1-01-PLAN.md — Foundation Logic & HUD (Visual grounding & Role Toggle)
-- [ ] phase-1.1-02-PLAN.md — Interaction Bar UI (Triple-Action Hover Bar)
-- [ ] phase-1.1-03-PLAN.md — Visual Polish & Constraints (Thinking state & Truncation)
+- [ ] phase-1.1-01-PLAN.md — Foundation Logic & HUD (Grounded layout, Role Toggle & Shortcuts)
+- [ ] phase-1.1-02-PLAN.md — Interaction UI Refinement (Hover Bar & Overlay Send)
+- [ ] phase-1.1-03-PLAN.md — Visual Polish & Navigation (Thinking state, Truncation & Auto-pan)
 
 ## Phase 2: Core AI Integration (Branching & Context)
 *Goal: Enable the core "Tree Learning" value proposition.*

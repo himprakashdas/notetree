@@ -4,28 +4,28 @@ plan: 01
 type: execute
 wave: 1
 depends_on: []
-files_modified: [src/index.css, src/store/useFlowStore.ts, src/components/canvas/FlowCanvas.tsx, src/types/index.ts]
+files_modified: [src/index.css, src/store/useFlowStore.ts, src/components/canvas/FlowCanvas.tsx, src/hooks/useHotkeys.ts, src/types/index.ts]
 autonomous: true
 
 must_haves:
   truths:
-    - "Role Toggle is visible in the top-right corner of the canvas"
-    - "Role Toggle successfully switches between 'User' and 'Assistant'"
-    - "HUD elements (Back button, Title, Role Toggle) are aligned to viewport corners"
-    - "useFlowStore includes addSiblingNode and addAIChildNode actions"
+    - "Canvas HUD (Back button, Title, Role Toggle) is correctly aligned to corners"
+    - "Role Toggle switches between 'User' and 'Assistant' roles"
+    - "Cmd+Enter triggers a branch: AI child for User nodes, Sibling for others (per user decision)"
   artifacts:
     - path: "src/store/useFlowStore.ts"
       provides: "Atomic branching logic and nextRole state"
     - path: "src/components/canvas/FlowCanvas.tsx"
-      provides: "Dev HUD with Role Toggle"
+      provides: "Grounded layout and HUD with Role Toggle"
+    - path: "src/hooks/useHotkeys.ts"
+      provides: "Context-aware Cmd+Enter branching"
 ---
 
 <objective>
-Refine the foundational logic and UI grounding for Phase 1.1. 
-This plan fixes Tailwind 4 alignment issues, implements a dev-mode Role Toggle, and updates the store with role-specific branching logic (Sibling/AI-child).
+Establish the refined foundation for Phase 1.1. This plan fixes Tailwind 4 grounding issues, implements the role-based state, and updates keyboard shortcuts to align with the new atomic turn-based model.
 
-Purpose: Establish the atomic turn-based model in the data layer and provide tools for testing it.
-Output: Updated store actions, dev-mode HUD toggle, and fixed layout.
+Purpose: Provide the logical and structural grounding for the refined interaction model.
+Output: Fixed layout, functional Role Toggle, and context-aware branching hotkeys.
 </objective>
 
 <execution_context>
@@ -38,90 +38,85 @@ Output: Updated store actions, dev-mode HUD toggle, and fixed layout.
 @.planning/ROADMAP.md
 @.planning/STATE.md
 @.planning/phases/phase-1/Phase1-CONTEXT-REFINED.md
+@src/index.css
 @src/store/useFlowStore.ts
 @src/components/canvas/FlowCanvas.tsx
-@src/index.css
+@src/hooks/useHotkeys.ts
 </context>
 
 <tasks>
 
 <task type="auto">
-  <name>Task 1: Fix Tailwind 4 grounding and misalignments</name>
+  <name>Task 1: Fix Tailwind 4 grounding and HUD alignment</name>
   <files>src/index.css, src/components/canvas/FlowCanvas.tsx</files>
   <action>
-    - Inspect and fix potential misalignment of the FlowCanvas HUD elements (Back button, Title).
-    - Ensure the Background grid/dots from @xyflow/react are correctly grounded (aligned with the 0,0 coordinate and spanning the full viewport).
-    - Verify Tailwind 4 @theme variables in index.css are correctly picked up by components.
-    - Remove any hardcoded heights that might be causing scrollbars or overflow issues in the main canvas container.
+    - Ensure `FlowCanvas.tsx` HUD elements (Back button, Title) use absolute positioning that respects safe areas and alignment.
+    - Fix Background grid/dots from `@xyflow/react` to ensure they are correctly grounded to the canvas origin.
+    - Verify that no hardcoded heights or weird margins cause layout shifts or unexpected scrollbars.
+    - Ensure Tailwind 4 `@theme` variables in `index.css` are properly utilized for branding (Rose-500, Zinc-900).
   </action>
   <verify>
-    - Open the app, go to a project.
-    - Check that HUD elements are cleanly aligned to the corners.
-    - Check that no unexpected scrollbars appear on the main viewport.
+    - Run the app, navigate to a project.
+    - Verify HUD elements are pinned to corners.
+    - Verify the canvas fills the viewport exactly.
   </verify>
   <done>
-    Canvas HUD is perfectly aligned and container fills viewport without overflow.
+    Canvas HUD is perfectly aligned and grounding issues are resolved.
   </done>
 </task>
 
 <task type="auto">
-  <name>Task 2: Implement Role Toggle and store state</name>
+  <name>Task 2: Implement Role Toggle and atomic store actions</name>
   <files>src/store/useFlowStore.ts, src/types/index.ts, src/components/canvas/FlowCanvas.tsx</files>
   <action>
-    - Add `thinking?: boolean` to `NodeData` interface in `src/types/index.ts`.
-    - In `useFlowStore.ts`:
-        - Add `nextRole: 'user' | 'ai'` to state, defaulting to 'user'.
-        - Add `setNextRole` action.
-    - In `FlowCanvas.tsx`:
-        - Add a Role Toggle component in the top-right HUD.
-        - Style it as a segmented control or toggle switch (User vs Assistant).
-        - Use Rose-500 for 'Assistant' and Zinc-500 for 'User' active states.
+    - Update `src/types/index.ts`: Add `thinking?: boolean` to `NodeData`.
+    - Update `src/store/useFlowStore.ts`:
+        - Add `nextRole: 'user' | 'ai'` (default 'user') and `setNextRole` action.
+        - Implement `addSiblingNode(nodeId: string)`: creates a sibling node of the SAME role, offset X+300.
+        - Implement `addAIChildNode(parentId: string)`: creates an 'ai' child node, set `thinking: true`, offset Y+200.
+    - Update `src/components/canvas/FlowCanvas.tsx`:
+        - Add a Role Toggle switch in the top-right HUD (User vs Assistant).
+        - Use Rose-500 for Assistant and Zinc-500 for User active states.
   </action>
   <verify>
-    - Role Toggle appears in the top-right of the canvas.
-    - Clicking it toggles between "User" and "Assistant".
-    - UI reflects the active choice visually.
+    - Role Toggle appears and updates store state.
+    - Store methods for sibling and AI-child exist and produce correct positions.
   </verify>
   <done>
-    Role Toggle is functional and integrated into the canvas HUD.
+    Role-based state and atomic branching logic are implemented.
   </done>
 </task>
 
 <task type="auto">
-  <name>Task 3: Implement atomic branching actions in store</name>
-  <files>src/store/useFlowStore.ts</files>
+  <name>Task 3: Refine Keyboard Shortcuts (Cmd+Enter)</name>
+  <files>src/hooks/useHotkeys.ts</files>
   <action>
-    - Implement `addSiblingNode(nodeId: string)`:
-        - Find the parent of the given node (by searching edges where target = nodeId).
-        - If parent found, create a new child for THAT parent with the same role as the current node.
-        - If no parent found (root), create a new root node with the same role.
-        - Offset the new node's X position by 300px (to the side).
-    - Implement `addAIChildNode(parentId: string)`:
-        - Create a new 'ai' node as a child of parentId.
-        - Set `thinking: true` in its data.
-        - Position it 200px below the parent.
-    - Update `addChildNode` to respect the `nextRole` from the store if it's used as a generic addition.
+    - Update `useHotkeys.ts` to handle `Cmd+Enter` (or `Ctrl+Enter`) based on the selected node's role:
+        - If selected node is `type === 'user'`, call `addAIChildNode`.
+        - If selected node is `type === 'ai'`, call `addSiblingNode` (or appropriate logical continuation).
+    - Ensure it still prevents default and stops propagation if inside an editor.
   </action>
   <verify>
-    - Store now has specific methods for Sibling and AI-Child creation.
-    - Positional offsets follow the 300px side / 200px below pattern.
+    - Select a User node, press Cmd+Enter: AI child should appear.
+    - Select an AI node, press Cmd+Enter: Sibling AI node (or User child if preferred) should appear. 
   </verify>
   <done>
-    Atomic branching logic is implemented in the store and ready for UI integration.
+    Keyboard shortcuts align with the refined branching logic.
   </done>
 </task>
 
 </tasks>
 
 <verification>
-- Verify Role Toggle updates the store state.
-- Verify `addSiblingNode` and `addAIChildNode` can be called (via console or temporary buttons) and produce the expected node types and positions.
+- Check HUD alignment.
+- Verify Role Toggle functionality.
+- Verify Cmd+Enter branching behavior.
 </verification>
 
 <success_criteria>
-- Layout is clean and grounded.
-- Role Toggle is visible and functional.
-- Store supports Sibling and AI-child branching patterns.
+- Clean, grounded canvas layout.
+- Functional Role Toggle.
+- Context-aware keyboard branching.
 </success_criteria>
 
 <output>

@@ -9,23 +9,22 @@ autonomous: true
 
 must_haves:
   truths:
-    - "AI nodes in thinking state appear translucent (0.5 alpha)"
-    - "Long text in nodes is truncated with '...'"
-    - "Newly created nodes are automatically centered in the view"
-    - "Node resizing is constrained within min (200x80) and max (600x400) limits"
+    - "AI nodes in 'Thinking' state are translucent (0.5 alpha)"
+    - "Text in nodes is truncated with '...' when overflowing"
+    - "Canvas automatically centers on newly created nodes"
+    - "Node resizing is constrained to reasonable min/max dimensions"
   artifacts:
     - path: "src/components/canvas/ChatNode.tsx"
-      provides: "Visual states and truncation"
+      provides: "Visual polish and constraints"
     - path: "src/store/useFlowStore.ts"
-      provides: "Auto-pan logic in node creation"
+      provides: "Auto-pan logic"
 ---
 
 <objective>
-Refine node visuals and interaction constraints for Phase 1.1.
-This plan implements the "Thinking" state visuals, ensures text truncation works across different node sizes, and refines auto-pan/resizing behavior.
+Refine the visual feedback and usability of the tree. This plan implements visual states for AI generation, ensures content is readable via truncation, and smooths out canvas navigation with auto-panning.
 
-Purpose: Improve the visual feedback and usability of the growing tree.
-Output: Polished node components and smoother canvas interactions.
+Purpose: Polish the user experience and maintain visual order as the tree grows.
+Output: Translucent thinking nodes, text truncation, and auto-centering canvas.
 </objective>
 
 <execution_context>
@@ -46,58 +45,50 @@ Output: Polished node components and smoother canvas interactions.
 <tasks>
 
 <task type="auto">
-  <name>Task 1: Implement 'Thinking' visuals and text truncation</name>
+  <name>Task 1: Thinking state and Text Truncation</name>
   <files>src/components/canvas/ChatNode.tsx</files>
   <action>
-    - Update `ChatNode` to check for `data.thinking`.
-    - Apply `opacity-50` to the node container if it is in thinking state.
-    - Implement robust text truncation for the node content:
-        - Use CSS line-clamp or a custom logic to ensure text doesn't overflow the flex-grow area.
-        - Ensure "..." appears if text is cut off.
-        - The truncation should dynamically adjust to the node's current width/height.
+    - Update `ChatNode` to apply `opacity-50` when `data.thinking` is true.
+    - Implement CSS-based text truncation for the node content area (e.g., `line-clamp-4` or similar depending on height).
+    - Ensure "..." appears when content exceeds the visible area of the node.
   </action>
   <verify>
-    - Create an AI node via 'Send' button: verify it appears semi-transparent.
-    - Paste a long text into a node: verify it truncates and shows "..." instead of overflowing.
+    - Create an AI node: verify it is translucent.
+    - Add long text to a node: verify it truncates correctly without overflowing the border.
   </verify>
   <done>
-    Nodes correctly reflect pending states and handle long content gracefully.
+    Visual states and content handling are polished.
   </done>
 </task>
 
 <task type="auto">
-  <name>Task 2: Refine resizing constraints and auto-pan logic</name>
-  <files>src/components/canvas/ChatNode.tsx, src/store/useFlowStore.ts, src/components/canvas/FlowCanvas.tsx</files>
+  <name>Task 2: Resizing constraints and Auto-pan logic</name>
+  <files>src/components/canvas/ChatNode.tsx, src/store/useFlowStore.ts</files>
   <action>
-    - Update `NodeResizer` in `ChatNode.tsx` with defined limits: `minWidth={200}`, `minHeight={80}`, `maxWidth={600}`, `maxHeight={400}`.
-    - Implement/Refine Auto-Pan in the store or canvas:
-        - When `addSiblingNode` or `addAIChildNode` is called, the canvas should automatically center on the newly created node.
-        - Use `reactFlow.setCenter` or `reactFlow.fitView` with appropriate padding and duration (800ms) to smoothly move to the new node.
-        - Ensure this doesn't conflict with manual panning.
+    - Update `NodeResizer` in `ChatNode.tsx` with constraints: `minWidth={200}`, `minHeight={80}`, `maxWidth={600}`, `maxHeight={400}`.
+    - Refine `addSiblingNode` and `addAIChildNode` in `useFlowStore.ts` (or use a hook in canvas) to trigger a `fitView` or `setCenter` call that focuses on the new node with a smooth transition (800ms).
   </action>
   <verify>
-    - Try to resize a node below 200px width: it should stop.
-    - Try to resize a node above 600px width: it should stop.
-    - Create a new node: the canvas should smoothly slide to center the new node.
+    - Verify resizing is blocked at min/max limits.
+    - Create a new node: verify the canvas pans to center it.
   </verify>
   <done>
-    Canvas feels "magnetic" and predictable, and node sizes are kept within reasonable bounds.
+    Interaction constraints and canvas navigation are refined.
   </done>
 </task>
 
 </tasks>
 
 <verification>
-- Verify that resizing limits are enforced.
-- Verify that the "Thinking" state is visually distinct.
-- Verify that auto-panning provides a smooth user experience.
+- Verify resizing limits.
+- Verify auto-panning on node creation.
+- Verify truncation works as expected.
 </verification>
 
 <success_criteria>
-- AI nodes have a visible "Thinking" state.
-- Text overflow is handled via truncation.
-- Resizing is constrained.
-- Canvas centers on new nodes.
+- AI generation state is visually clear.
+- Text content is well-managed.
+- Navigation is smooth and follows creation.
 </success_criteria>
 
 <output>
