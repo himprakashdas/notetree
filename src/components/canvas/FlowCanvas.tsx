@@ -9,7 +9,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { nanoid } from 'nanoid';
-import { ChevronLeft, Plus, Maximize, Loader2 } from 'lucide-react';
+import { ChevronLeft, Plus, Maximize, Loader2, User, Sparkles } from 'lucide-react';
 
 import { useFlowStore } from '../../store/useFlowStore';
 import { useAppStore } from '../../store/useAppStore';
@@ -38,6 +38,8 @@ const FlowCanvasInternal = () => {
     setDeletingNodeId,
     deleteNodeOnly,
     deleteNodeAndDescendants,
+    nextRoleOverride,
+    setNextRoleOverride,
     isLoading,
     loadProjectData,
     clearData
@@ -130,6 +132,32 @@ const FlowCanvasInternal = () => {
         >
           <ChevronLeft className="w-4 h-4" />
           Back to Gallery
+        </button>
+      </div>
+
+      {/* HUD - Top Right (Role Toggle) */}
+      <div className={`absolute top-6 right-6 z-10 flex p-1 bg-zinc-900/50 backdrop-blur-md border border-zinc-800 rounded-lg transition-opacity duration-300 ${(isEditing || isDeleting) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <button
+          onClick={() => setNextRoleOverride('user')}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-bold ${
+            nextRoleOverride === 'user' || nextRoleOverride === null
+              ? 'bg-zinc-800 text-white shadow-sm'
+              : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          <User className={`w-3.5 h-3.5 ${nextRoleOverride === 'user' || nextRoleOverride === null ? 'text-zinc-300' : 'text-zinc-600'}`} />
+          USER
+        </button>
+        <button
+          onClick={() => setNextRoleOverride('ai')}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-bold ${
+            nextRoleOverride === 'ai'
+              ? 'bg-rose-500/20 text-rose-500 shadow-sm'
+              : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          <Sparkles className={`w-3.5 h-3.5 ${nextRoleOverride === 'ai' ? 'text-rose-500' : 'text-zinc-600'}`} />
+          ASSISTANT
         </button>
       </div>
 

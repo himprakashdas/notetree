@@ -21,6 +21,7 @@ interface FlowState {
   edges: NoteTreeEdge[];
   editingNodeId: string | null;
   deletingNodeId: string | null;
+  nextRoleOverride: 'user' | 'ai' | null;
   isLoading: boolean;
   onNodesChange: OnNodesChange<NoteTreeNode>;
   onEdgesChange: OnEdgesChange<NoteTreeEdge>;
@@ -28,6 +29,9 @@ interface FlowState {
   setNodes: (nodes: NoteTreeNode[]) => void;
   setEdges: (edges: NoteTreeEdge[]) => void;
   addNode: (node: NoteTreeNode) => void;
+  setNextRoleOverride: (role: 'user' | 'ai' | null) => void;
+  addBranch: (parentId: string) => NoteTreeNode | undefined;
+  addAIChild: (parentId: string) => NoteTreeNode | undefined;
   addChildNode: (parentId: string) => NoteTreeNode | undefined;
   deleteNodeOnly: (nodeId: string) => void;
   deleteNodeAndDescendants: (nodeId: string) => void;
@@ -43,6 +47,7 @@ export const useFlowStore = create<FlowState>((set, get) => ({
   edges: [],
   editingNodeId: null,
   deletingNodeId: null,
+  nextRoleOverride: null,
   isLoading: false,
   onNodesChange: (changes: NodeChange<NoteTreeNode>[]) => {
     set({
@@ -64,25 +69,77 @@ export const useFlowStore = create<FlowState>((set, get) => ({
   setEdges: (edges) => set({ edges }),
   addNode: (node) => set({ nodes: [...get().nodes, node] }),
   
-  addChildNode: (parentId: string) => {
+  setNextRoleOverride: (role) => set({ nextRoleOverride: role }),
+
+  addBranch: (parentId: string) => {
+    const { nodes, edges, nextRoleOverride, setNextRoleOverride } = get();
+    const parentNode = nodes.find((n) => n.id === parentId);
+    if (!parentNode) return;
+
+    let role: 'user' | 'ai';
+    if (nextRoleOverride) {
+      role = nextRoleOverride;
+      setNextRoleOverride(null);
+    } else {
+      // Default logic: AI -> User child, User -> User sibling
+      role = parentNode.data.type === 'ai' ? 'user' : 'user';
+    }
+
+    const isSameRole = role === parentNode.data.type;
+    const newNodeId = nanoid();
+
+    // Sibling (same role) offset X+300, Child (diff role) offset Y+200
+    const newNode: NoteTreeNode = {
+      id: newNodeId,
+      type: 'chatNode',
+      position: {
+        x: parentNode.position.x + (isSameRole ? 300 : 0),
+        y: parentNode.position.y + (isSameRole ? 0 : 200),
+      },
+      data: {
+        label: '',
+        content: '',
+        type: role,
+      },
+      style: { width: 250, height: 120 },
+    };
+
+    // Edge handling
+    const parentEdge = edges.find(e => e.target === parentId);
+    const actualParentId = (isSameRole && parentEdge) ? parentEdge.source : parentId;
+
+    const newEdge: NoteTreeEdge = {
+      id: `e-${actualParentId}-${newNodeId}`,
+      source: actualParentId,
+      target: newNodeId,
+    };
+
+    set({
+      nodes: [...nodes, newNode],
+      edges: (isSameRole && !parentEdge) ? edges : [...edges, newEdge],
+    });
+
+    return newNode;
+  },
+
+  addAIChild: (parentId: string) => {
     const { nodes, edges } = get();
     const parentNode = nodes.find((n) => n.id === parentId);
     if (!parentNode) return;
 
     const newNodeId = nanoid();
-    const isParentUser = parentNode.data.type === 'user';
-    
     const newNode: NoteTreeNode = {
       id: newNodeId,
       type: 'chatNode',
       position: {
-        x: parentNode.position.x + (Math.random() - 0.5) * 50,
+        x: parentNode.position.x,
         y: parentNode.position.y + 200,
       },
       data: {
         label: '',
         content: '',
-        type: isParentUser ? 'ai' : 'user',
+        type: 'ai',
+        thinking: true,
       },
       style: { width: 250, height: 120 },
     };
@@ -99,6 +156,10 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     });
 
     return newNode;
+  },
+
+  addChildNode: (parentId: string) => {
+    return get().addBranch(parentId);
   },
 
   deleteNodeOnly: (nodeId: string) => {

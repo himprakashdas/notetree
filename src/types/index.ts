@@ -11,6 +11,7 @@ export interface NodeData extends Record<string, unknown> {
   label: string;
   content: string;
   type: 'user' | 'ai';
+  thinking?: boolean;
 }
 
 export type NoteTreeNode = Node<NodeData>;
