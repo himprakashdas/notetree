@@ -314,28 +314,95 @@ export const useFlowStore = create<FlowState>()(
       reLayoutTree: async () => {
         const { nodes, edges } = get();
         if (nodes.length === 0) return;
-        const H_GAP = 280;
-        const V_GAP = 180;
+
+        const MIN_H_GAP = 50; // Minimum horizontal gap between siblings
+        const MIN_V_GAP = 50; // Minimum vertical gap between levels
         const newNodes = [...nodes];
         const processed = new Set<string>();
+
+        // Helper to get node dimensions
+        const getNodeDimensions = (nodeId: string) => {
+          const node = newNodes.find(n => n.id === nodeId);
+          if (!node) return { width: 250, height: 120 }; // Default dimensions
+
+          // Ensure dimensions are numbers
+          const width = typeof node.style?.width === 'number' ? node.style.width :
+            typeof node.width === 'number' ? node.width : 250;
+          const height = typeof node.style?.height === 'number' ? node.style.height :
+            typeof node.height === 'number' ? node.height : 120;
+
+          return { width, height };
+        };
+
+        // Calculate the width needed for a subtree
+        const calculateSubtreeWidth = (nodeId: string): number => {
+          const children = edges.filter(e => e.source === nodeId).map(e => e.target);
+          if (children.length === 0) {
+            return getNodeDimensions(nodeId).width;
+          }
+
+          // Sum of all children's subtree widths plus gaps
+          const childrenWidths = children.map(childId => calculateSubtreeWidth(childId));
+          const totalChildrenWidth = childrenWidths.reduce((sum, w) => sum + w, 0);
+          const gapsWidth = (children.length - 1) * MIN_H_GAP;
+          const subtreeWidth = totalChildrenWidth + gapsWidth;
+
+          // Return the max of node width and subtree width
+          const nodeWidth = getNodeDimensions(nodeId).width;
+          return Math.max(nodeWidth, subtreeWidth);
+        };
 
         const layout = (nodeId: string, x: number, y: number) => {
           const nodeIndex = newNodes.findIndex(n => n.id === nodeId);
           if (nodeIndex === -1 || processed.has(nodeId)) return;
-          newNodes[nodeIndex] = { ...newNodes[nodeIndex], position: { x, y } };
+
+          const nodeDims = getNodeDimensions(nodeId);
+
+          // Center the node at the given x position
+          newNodes[nodeIndex] = {
+            ...newNodes[nodeIndex],
+            position: { x: x - nodeDims.width / 2, y }
+          };
           processed.add(nodeId);
-          const childrenNodes = edges.filter(e => e.source === nodeId).map(e => e.target);
-          childrenNodes.forEach((childId, index) => {
-            const side = index % 2 === 0 ? -1 : 1;
-            const rank = Math.ceil(index / 2);
-            const horizontalOffset = index === 0 ? 0 : side * rank * H_GAP;
-            layout(childId, x + horizontalOffset, y + V_GAP);
+
+          const children = edges.filter(e => e.source === nodeId).map(e => e.target);
+          if (children.length === 0) return;
+
+          // Calculate positions for children
+          const childSubtreeWidths = children.map(childId => calculateSubtreeWidth(childId));
+          const totalWidth = childSubtreeWidths.reduce((sum, w) => sum + w, 0) +
+            (children.length - 1) * MIN_H_GAP;
+
+          // Start position for children (centered under parent)
+          let currentX = x - totalWidth / 2;
+
+          children.forEach((childId, index) => {
+            const childSubtreeWidth = childSubtreeWidths[index];
+            const childCenterX = currentX + childSubtreeWidth / 2;
+
+            // Calculate Y position based on parent's height
+            const childY = y + nodeDims.height + MIN_V_GAP;
+
+            layout(childId, childCenterX, childY);
+
+            // Move to next child position
+            currentX += childSubtreeWidth + MIN_H_GAP;
           });
         };
 
+        // Find root nodes (nodes with no incoming edges)
         const leafIds = new Set(edges.map(e => e.target));
         const roots = nodes.filter(n => !leafIds.has(n.id));
-        roots.forEach((root, i) => layout(root.id, i * 600, 0));
+
+        // Layout each root tree
+        let currentRootX = 0;
+        roots.forEach((root) => {
+          const rootSubtreeWidth = calculateSubtreeWidth(root.id);
+          const rootCenterX = currentRootX + rootSubtreeWidth / 2;
+          layout(root.id, rootCenterX, 0);
+          currentRootX += rootSubtreeWidth + MIN_H_GAP * 3; // Extra gap between separate trees
+        });
+
         set({ nodes: newNodes });
 
         // Automatically save after layout
