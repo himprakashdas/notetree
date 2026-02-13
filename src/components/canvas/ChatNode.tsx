@@ -73,7 +73,11 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
             {isUser ? 'User' : 'Assistant'}
           </div>
           <div className="text-sm flex-grow whitespace-pre-wrap overflow-hidden line-clamp-6">
-            {data.label || '...'}
+            {data.thinking ? (
+              <span className="italic text-zinc-500 animate-pulse">Thinking...</span>
+            ) : (
+              data.label || (isUser ? '...' : '')
+            )}
           </div>
         </div>
 
