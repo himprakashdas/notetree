@@ -1,9 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { X, Send } from 'lucide-react';
+import { useReactFlow } from '@xyflow/react';
 import { useFlowStore } from '../../store/useFlowStore';
 
 const ChatOverlay = () => {
   const { editingNodeId, setEditingNodeId, nodes, updateNodeContent, addAIChild } = useFlowStore();
+  const { setCenter } = useReactFlow();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const editingNode = nodes.find((n) => n.id === editingNodeId);
@@ -31,7 +33,13 @@ const ChatOverlay = () => {
     if (!editingNodeId || !hasContent) return;
     
     if (isUser) {
-      addAIChild(editingNodeId);
+      const newNode = addAIChild(editingNodeId);
+      if (newNode) {
+        setCenter(newNode.position.x + 125, newNode.position.y + 100, { 
+          duration: 800,
+          zoom: 1 
+        });
+      }
     }
     setEditingNodeId(null);
   };

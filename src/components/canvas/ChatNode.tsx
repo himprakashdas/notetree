@@ -47,6 +47,8 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
         isVisible={selected} 
         minWidth={200} 
         minHeight={80} 
+        maxWidth={600}
+        maxHeight={400}
       />
       <div
         className={twMerge(
