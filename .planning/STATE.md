@@ -2,7 +2,7 @@
 
 ## Current Phase: Phase 1.1 (Refined Foundation & Interactions)
 **Status**: In Progress
-**Progress**: 2/3 Plans
+**Progress**: 3/3 Plans
 **Goal**: Align the UI and node model with the atomic turn-based refinement and fix layout grounding.
 
 ## Completed Milestones
@@ -14,10 +14,9 @@
 - [x] Phase 1: Foundation (Plans 01-05 completed).
 - [x] Phase 1.1 Plan 01: Foundation Logic & HUD.
 - [x] Phase 1.1 Plan 02: Interaction UI Refinement.
+- [x] Phase 1.1 Plan 03: Visual Polish & Navigation.
 
 ## Active Tasks
-- [ ] Implement Role-specific Branching & Thinking state (Plan 1.1-02).
-- [ ] Refine Text Truncation & Resizing Constraints (Plan 1.1-03).
 - [ ] Add Top-Right Role Toggle & UI Polishing (Plan 1.1-04).
 
 ## Decisions
@@ -35,11 +34,16 @@
 - [Phase 1.1]: Role Toggle in HUD acts as a creation override for the next node.
 - [Phase 1.1]: Implemented Triple-Action Hover Bar: Delete, Plus, Send.
 - [Phase 1.1]: Plus button on AI nodes creates User child by default (Reply flow).
+- [Phase 1.1]: AI nodes in 'Thinking' state use opacity-50 for visual feedback.
+- [Phase 1.1]: Text truncation implemented via Tailwind's line-clamp-6.
+- [Phase 1.1]: Node resizing constrained to 200x80 min and 600x400 max.
+- [Phase 1.1]: Auto-pan focuses on new nodes with 800ms smooth transition.
 
 ## Performance Metrics
 - **Phase 1.1 Plan 01**: 25m, 3 tasks, 4 files.
 - **Phase 1.1 Plan 02**: 15m, 2 tasks, 2 files.
+- **Phase 1.1 Plan 03**: 20m, 2 tasks, 3 files.
 
 ## Session Info
 - **Last session**: 2026-02-13
-- **Stopped at**: Completed Phase 1.1 Plan 02
+- **Stopped at**: Completed Phase 1.1 Plan 03
