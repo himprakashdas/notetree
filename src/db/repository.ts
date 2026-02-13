@@ -58,6 +58,15 @@ export const projectRepository = {
     return { nodes, edges };
   },
 
+  async updateNodeContent(projectId: string, nodeId: string, label: string) {
+    const node = await db.nodes.get(nodeId);
+    if (node && node.projectId === projectId) {
+      return db.nodes.update(nodeId, {
+        data: { ...node.data, label }
+      });
+    }
+  },
+
   async getAIContext(
     projectId: string, 
     parentNodeId: string, 
