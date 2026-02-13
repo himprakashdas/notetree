@@ -99,6 +99,7 @@ export const useFlowStore = create<FlowState>((set, get) => ({
         label: '',
         content: '',
         type: role,
+        thinking: role === 'ai',
       },
       style: { width: 250, height: 120 },
     };
