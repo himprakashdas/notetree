@@ -9,20 +9,21 @@
 - [x] phase-1-04-PLAN.md — Chat Overlay & Sync (Editor & Real-time persistence)
 - [x] phase-1-05-PLAN.md — Node Management & Polish (Deletion logic & Branding)
 
-## Phase 1.1: Refined Foundation & Interactions
+## Phase 1.1: Refined Foundation & Interactions [COMPLETE]
 *Goal: Align the UI and node model with the atomic turn-based refinement.*
 **Plans:** 3 plans
-- [ ] phase-1.1-01-PLAN.md — Foundation Logic & HUD (Grounded layout, Role Toggle & Shortcuts)
-- [ ] phase-1.1-02-PLAN.md — Interaction UI Refinement (Hover Bar & Overlay Send)
-- [ ] phase-1.1-03-PLAN.md — Visual Polish & Navigation (Thinking state, Truncation & Auto-pan)
+- [x] phase-1.1-01-PLAN.md — Foundation Logic & HUD (Grounded layout, Role Toggle & Shortcuts)
+- [x] phase-1.1-02-PLAN.md — Interaction UI Refinement (Hover Bar & Overlay Send)
+- [x] phase-1.1-03-PLAN.md — Visual Polish & Navigation (Thinking state, Truncation & Auto-pan)
 
 ## Phase 2: Core AI Integration (Branching & Context)
 *Goal: Enable the core "Tree Learning" value proposition.*
-- [ ] Integrate Gemini API client.
-- [ ] Implement ancestor-based context inheritance logic.
-- [ ] Build the "Branch" interaction (spawn child node from parent).
-- [ ] Sequential request queueing to handle multiple AI calls.
-- [ ] Basic token counting and error handling.
+**Plans:** 5 plans
+- [ ] phase-2-01-PLAN.md — API & Context Logic (Gemini & DAG Traversal)
+- [ ] phase-2-02-PLAN.md — AI Queue Store (FIFO & Background Processing)
+- [ ] phase-2-03-PLAN.md — Streaming Integration (Real-time Canvas Updates)
+- [ ] phase-2-04-PLAN.md — Resilience & Feedback (Retries & Safety)
+- [ ] phase-2-05-PLAN.md — Controls & Refinement (Stop button & Scrollability)
 
 ## Phase 3: Visual Management (Focus & Organization)
 *Goal: Prevent "Tree Sprawl" and improve UI/UX.*
