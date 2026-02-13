@@ -3,11 +3,18 @@
 ## Phase 1: Foundation (Infinite Canvas & Persistence)
 *Goal: Establish the visual workspace and local data storage.*
 **Plans:** 5 plans
-- [ ] phase-1-01-PLAN.md — Foundation & Persistence Setup (Project Gallery & Dexie)
-- [ ] phase-1-02-PLAN.md — The Infinite Canvas (React Flow & Custom Nodes)
-- [ ] phase-1-03-PLAN.md — Interaction & Branching (Tree growth & Navigation)
-- [ ] phase-1-04-PLAN.md — Chat Overlay & Sync (Editor & Real-time persistence)
-- [ ] phase-1-05-PLAN.md — Node Management & Polish (Deletion logic & Branding)
+- [x] phase-1-01-PLAN.md — Foundation & Persistence Setup (Project Gallery & Dexie)
+- [x] phase-1-02-PLAN.md — The Infinite Canvas (React Flow & Custom Nodes)
+- [x] phase-1-03-PLAN.md — Interaction & Branching (Tree growth & Navigation)
+- [x] phase-1-04-PLAN.md — Chat Overlay & Sync (Editor & Real-time persistence)
+- [x] phase-1-05-PLAN.md — Node Management & Polish (Deletion logic & Branding)
+
+## Phase 1.1: Refined Foundation & Interactions
+*Goal: Align the UI and node model with the atomic turn-based refinement.*
+**Plans:** 3 plans
+- [ ] phase-1.1-01-PLAN.md — Foundation Logic & HUD (Visual grounding & Role Toggle)
+- [ ] phase-1.1-02-PLAN.md — Interaction Bar UI (Triple-Action Hover Bar)
+- [ ] phase-1.1-03-PLAN.md — Visual Polish & Constraints (Thinking state & Truncation)
 
 ## Phase 2: Core AI Integration (Branching & Context)
 *Goal: Enable the core "Tree Learning" value proposition.*
