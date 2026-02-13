@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="notetree-logos/Complete-logo.png" alt="NoteTree Logo" width="600">
+</p>
+
 # NoteTree: A Contextual Hierarchical Learning Interface
 
 ## Problem Statement
