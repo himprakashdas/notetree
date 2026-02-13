@@ -78,7 +78,8 @@ const FlowCanvasInternal = () => {
       data: { 
         label: 'Hello! This is the first node.', 
         content: '', 
-        type: 'user' 
+        type: 'user',
+        createdAt: Date.now(),
       },
       style: { width: 250, height: 120 },
     };

@@ -100,6 +100,7 @@ export const useFlowStore = create<FlowState>((set, get) => ({
         content: '',
         type: role,
         thinking: role === 'ai',
+        createdAt: Date.now(),
       },
       style: { width: 250, height: 120 },
     };
@@ -140,6 +141,7 @@ export const useFlowStore = create<FlowState>((set, get) => ({
         content: '',
         type: 'ai',
         thinking: true,
+        createdAt: Date.now(),
       },
       style: { width: 250, height: 120 },
     };
