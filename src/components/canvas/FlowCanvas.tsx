@@ -148,9 +148,11 @@ const FlowCanvasInternal = () => {
     <div className={`w-full h-full bg-background relative ${(isEditing || isDeleting) ? 'overflow-hidden' : ''}`}>
       {/* HUD - Top Left */}
       <div className={`absolute top-6 left-6 z-10 flex gap-4 items-center transition-opacity duration-300 ${(isEditing || isDeleting) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-        <div className="flex items-center gap-2">
-          <img src="/favicon.png" alt="Logo" className="w-6 h-6" />
-          <span className="font-bold text-rose-500 tracking-tight select-none">NoteTree</span>
+        <div className="flex items-center gap-3">
+          <div className="w-1.5 h-6 bg-rose-500 rounded-full" />
+          <span className="font-bold text-zinc-100 text-lg tracking-tight select-none">
+            {activeProject?.name || 'Untitled Project'}
+          </span>
         </div>
       </div>
 
