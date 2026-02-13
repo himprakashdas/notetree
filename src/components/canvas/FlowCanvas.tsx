@@ -141,8 +141,8 @@ const FlowCanvasInternal = () => {
           onClick={() => setNextRoleOverride('user')}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-bold ${
             nextRoleOverride === 'user' || nextRoleOverride === null
-              ? 'bg-zinc-800 text-white shadow-sm'
-              : 'text-zinc-500 hover:text-zinc-300'
+              ? 'bg-zinc-800 text-zinc-100 shadow-sm'
+              : 'text-zinc-500 hover:text-zinc-400'
           }`}
         >
           <User className={`w-3.5 h-3.5 ${nextRoleOverride === 'user' || nextRoleOverride === null ? 'text-zinc-300' : 'text-zinc-600'}`} />
@@ -153,7 +153,7 @@ const FlowCanvasInternal = () => {
           className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-bold ${
             nextRoleOverride === 'ai'
               ? 'bg-rose-500/20 text-rose-500 shadow-sm'
-              : 'text-zinc-500 hover:text-zinc-300'
+              : 'text-zinc-500 hover:text-rose-500/50'
           }`}
         >
           <Sparkles className={`w-3.5 h-3.5 ${nextRoleOverride === 'ai' ? 'text-rose-500' : 'text-zinc-600'}`} />
@@ -196,7 +196,7 @@ const FlowCanvasInternal = () => {
           variant={BackgroundVariant.Dots} 
           gap={20} 
           size={1} 
-          color="#333"
+          color="#27272a"
         />
       </ReactFlow>
 
