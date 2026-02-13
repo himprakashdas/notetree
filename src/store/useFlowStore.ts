@@ -15,6 +15,9 @@ import {
 import { nanoid } from 'nanoid';
 import { NoteTreeNode, NoteTreeEdge } from '../types';
 import { projectRepository } from '../db/repository';
+import { useAIStore } from './useAIStore';
+import { useAppStore } from './useAppStore';
+import { createContextSnapshot } from '../utils/ai';
 
 interface FlowState {
   nodes: NoteTreeNode[];
@@ -120,6 +123,14 @@ export const useFlowStore = create<FlowState>((set, get) => ({
       edges: (isSameRole && !parentEdge) ? edges : [...edges, newEdge],
     });
 
+    // If AI node, enqueue for generation
+    const projectId = useAppStore.getState().activeProject?.id;
+    if (projectId && role === 'ai') {
+      createContextSnapshot(projectId, actualParentId).then(snapshot => {
+        useAIStore.getState().enqueue(newNodeId, snapshot);
+      });
+    }
+
     return newNode;
   },
 
@@ -156,6 +167,14 @@ export const useFlowStore = create<FlowState>((set, get) => ({
       nodes: [...nodes, newNode],
       edges: [...edges, newEdge],
     });
+
+    // Enqueue for generation
+    const projectId = useAppStore.getState().activeProject?.id;
+    if (projectId) {
+      createContextSnapshot(projectId, parentId).then(snapshot => {
+        useAIStore.getState().enqueue(newNodeId, snapshot);
+      });
+    }
 
     return newNode;
   },
