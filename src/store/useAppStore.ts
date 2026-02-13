@@ -14,6 +14,7 @@ interface AppState {
   updateActiveProject: (updates: Partial<Project>) => Promise<void>;
   createProject: (name: string) => Promise<Project>;
   deleteProject: (id: string) => Promise<void>;
+  renameProject: (id: string, newName: string) => Promise<void>;
   setFontSize: (size: 'small' | 'medium' | 'large') => void;
 }
 
@@ -59,6 +60,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
     await get().fetchProjects();
   },
+
+  renameProject: async (id, newName) => {
+    await projectRepository.updateProject(id, { name: newName });
+    const { activeProject } = get();
+    if (activeProject?.id === id) {
+      set({ activeProject: { ...activeProject, name: newName } });
+    }
+    await get().fetchProjects();
+  },
+
   fontSize: (localStorage.getItem('notetree-font-size') as any) || 'medium',
   setFontSize: (size) => {
     localStorage.setItem('notetree-font-size', size);

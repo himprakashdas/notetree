@@ -51,7 +51,7 @@ const FlowCanvasInternal = () => {
     reLayoutTree
   } = useFlowStore();
 
-  const { activeProject, setActiveProject, updateActiveProject } = useAppStore();
+  const { activeProject, setActiveProject, updateActiveProject, renameProject } = useAppStore();
   const activeProjectId = activeProject?.id;
   const { fitView, setCenter } = useReactFlow();
 
@@ -60,6 +60,8 @@ const FlowCanvasInternal = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState(activeProject?.systemPrompt || '');
   const [model, setModel] = useState(activeProject?.model || 'gemini-2.5-flash');
+  const [isEditingProjectName, setIsEditingProjectName] = useState(false);
+  const [editedProjectName, setEditedProjectName] = useState('');
 
   // Initialize keyboard shortcuts and persistence
   useHotkeys();
@@ -88,6 +90,29 @@ const FlowCanvasInternal = () => {
     setActiveProject(null);
     clearData();
   }, [setActiveProject, clearData]);
+
+  const handleProjectNameClick = () => {
+    if (activeProject) {
+      setEditedProjectName(activeProject.name);
+      setIsEditingProjectName(true);
+    }
+  };
+
+  const handleProjectNameSave = async () => {
+    if (activeProject && editedProjectName.trim() && editedProjectName !== activeProject.name) {
+      await renameProject(activeProject.id, editedProjectName.trim());
+    }
+    setIsEditingProjectName(false);
+  };
+
+  const handleProjectNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleProjectNameSave();
+    } else if (e.key === 'Escape') {
+      setIsEditingProjectName(false);
+    }
+  };
 
   const startChat = useCallback(() => {
     const newNodeId = nanoid();
@@ -150,9 +175,24 @@ const FlowCanvasInternal = () => {
       <div className={`absolute top-6 left-6 z-10 flex gap-4 items-center transition-opacity duration-300 ${(isEditing || isDeleting) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <div className="flex items-center gap-3">
           <div className="w-1.5 h-6 bg-rose-500 rounded-full" />
-          <span className="font-bold text-zinc-100 text-lg tracking-tight select-none">
-            {activeProject?.name || 'Untitled Project'}
-          </span>
+          {isEditingProjectName ? (
+            <input
+              autoFocus
+              type="text"
+              value={editedProjectName}
+              onChange={(e) => setEditedProjectName(e.target.value)}
+              onBlur={handleProjectNameSave}
+              onKeyDown={handleProjectNameKeyDown}
+              className="font-bold text-zinc-100 text-lg tracking-tight bg-zinc-900 border border-rose-500/50 rounded px-2 py-1 outline-none"
+            />
+          ) : (
+            <span
+              onClick={handleProjectNameClick}
+              className="font-bold text-zinc-100 text-lg tracking-tight select-none cursor-pointer hover:text-rose-400 transition-colors"
+            >
+              {activeProject?.name || 'Untitled Project'}
+            </span>
+          )}
         </div>
       </div>
 

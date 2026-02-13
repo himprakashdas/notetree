@@ -12,7 +12,8 @@ import {
     LayoutGrid,
     RefreshCw,
     Check,
-    Type
+    Type,
+    Edit2
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { formatDistanceToNow } from 'date-fns';
@@ -28,7 +29,8 @@ export function Sidebar() {
         createProject,
         deleteProject,
         fontSize,
-        setFontSize
+        setFontSize,
+        renameProject
     } = useAppStore();
     const { clearData, saveStatus, forceSave } = useFlowStore();
 
@@ -36,6 +38,8 @@ export function Sidebar() {
     const [isCreating, setIsCreating] = useState(false);
     const [newProjectName, setNewProjectName] = useState('');
     const [projectToDelete, setProjectToDelete] = useState<{ id: string; name: string } | null>(null);
+    const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+    const [editingProjectName, setEditingProjectName] = useState('');
 
     useEffect(() => {
         fetchProjects();
@@ -70,6 +74,28 @@ export function Sidebar() {
         if (activeProject?.id === project.id) return;
         clearData();
         setActiveProject(project);
+    };
+
+    const handleProjectDoubleClick = (e: React.MouseEvent, project: any) => {
+        e.stopPropagation();
+        setEditingProjectId(project.id);
+        setEditingProjectName(project.name);
+    };
+
+    const handleRenameSubmit = async () => {
+        if (editingProjectId && editingProjectName.trim()) {
+            await renameProject(editingProjectId, editingProjectName.trim());
+        }
+        setEditingProjectId(null);
+    };
+
+    const handleRenameKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleRenameSubmit();
+        } else if (e.key === 'Escape') {
+            setEditingProjectId(null);
+        }
     };
 
     return (
@@ -137,7 +163,25 @@ export function Sidebar() {
                                 activeProject?.id === project.id ? "bg-rose-500 animate-pulse" : "bg-zinc-800 group-hover:bg-zinc-600"
                             )} />
                             <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium truncate">{project.name}</div>
+                                {editingProjectId === project.id ? (
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        value={editingProjectName}
+                                        onChange={(e) => setEditingProjectName(e.target.value)}
+                                        onBlur={handleRenameSubmit}
+                                        onKeyDown={handleRenameKeyDown}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-full bg-zinc-900 border border-rose-500/50 rounded px-2 py-1 text-sm font-medium outline-none"
+                                    />
+                                ) : (
+                                    <div
+                                        onDoubleClick={(e) => handleProjectDoubleClick(e, project)}
+                                        className="text-sm font-medium truncate"
+                                    >
+                                        {project.name}
+                                    </div>
+                                )}
                                 <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
                                     {formatDistanceToNow(project.lastModified)} ago
                                 </div>
