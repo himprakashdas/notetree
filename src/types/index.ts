@@ -6,6 +6,7 @@ export interface Project {
   createdAt: number;
   lastModified: number;
   systemPrompt: string;
+  model: string;
 }
 
 export interface NodeData extends Record<string, unknown> {

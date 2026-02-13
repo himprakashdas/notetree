@@ -6,6 +6,9 @@ import { Plus, Trash2, Send, Square } from 'lucide-react';
 import { NoteTreeNode } from '../../types';
 import { useFlowStore } from '../../store/useFlowStore';
 import { useAIStore } from '../../store/useAIStore';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Tooltip } from '../ui/Tooltip';
 
 const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
   const isUser = data.type === 'user';
@@ -14,14 +17,14 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
   const setDeletingNodeId = useFlowStore((state) => state.setDeletingNodeId);
   const stopGeneration = useAIStore((state) => state.stopGeneration);
   const { setCenter } = useReactFlow();
-  
+
   const handleAddBranch = (e: React.MouseEvent) => {
     e.stopPropagation();
     const newNode = addBranch(id);
     if (newNode) {
-      setCenter(newNode.position.x + 125, newNode.position.y + 100, { 
+      setCenter(newNode.position.x + 125, newNode.position.y + 100, {
         duration: 800,
-        zoom: 1 
+        zoom: 1
       });
     }
   };
@@ -30,9 +33,9 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
     e.stopPropagation();
     const newNode = addAIChild(id);
     if (newNode) {
-      setCenter(newNode.position.x + 125, newNode.position.y + 100, { 
+      setCenter(newNode.position.x + 125, newNode.position.y + 100, {
         duration: 800,
-        zoom: 1 
+        zoom: 1
       });
     }
   };
@@ -49,11 +52,11 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
 
   return (
     <>
-      <NodeResizer 
-        color="#f43f5e" 
-        isVisible={selected} 
-        minWidth={200} 
-        minHeight={80} 
+      <NodeResizer
+        color="#f43f5e"
+        isVisible={selected}
+        minWidth={200}
+        minHeight={80}
         maxWidth={600}
         maxHeight={400}
       />
@@ -74,19 +77,25 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
           position={Position.Top}
           className="w-2 h-2 !bg-zinc-600 border-none"
         />
-        
+
         <div className="text-[10px] uppercase tracking-wider font-bold text-zinc-500 mb-1 shrink-0">
           {isUser ? 'User' : 'Assistant'}
         </div>
-        
-        <div className="text-sm flex-grow whitespace-pre-wrap overflow-y-auto custom-scrollbar pr-1">
+
+        <div className="text-sm flex-grow whitespace-pre-wrap overflow-y-auto custom-scrollbar pr-1 markdown-content nowheel">
           {data.thinking ? (
             <div className="flex flex-col gap-2">
               <span className="italic text-zinc-500 animate-pulse">Thinking...</span>
-              {data.label && <div className="text-zinc-300">{data.label}</div>}
+              {data.label && (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {data.label}
+                </ReactMarkdown>
+              )}
             </div>
           ) : (
-            data.label || (isUser ? '' : '')
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {data.label || ''}
+            </ReactMarkdown>
           )}
         </div>
 
@@ -106,41 +115,43 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
           )}
         >
           {data.thinking ? (
-            <>
+            <Tooltip content="Stop Generation" position="bottom">
               <button
                 onClick={handleStop}
                 className="w-8 h-8 rounded-full flex items-center justify-center text-rose-500 hover:text-rose-400 hover:bg-zinc-700 transition-colors"
-                title="Stop Generation"
               >
                 <Square className="w-3 h-3 fill-current" />
               </button>
-            </>
+            </Tooltip>
           ) : (
             <>
-              <button
-                onClick={handleDelete}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-red-400 hover:bg-zinc-700 transition-colors"
-                title="Delete"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-              
-              <button
-                onClick={handleAddBranch}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
-                title={isUser ? "Add User sibling" : "Add User reply"}
-              >
-                <Plus className="w-4 h-4" />
-              </button>
+              <Tooltip content="Delete node" position="bottom">
+                <button
+                  onClick={handleDelete}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-red-400 hover:bg-zinc-700 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </Tooltip>
+
+              <Tooltip content={isUser ? "Add User sibling" : "Add User reply"} position="bottom">
+                <button
+                  onClick={handleAddBranch}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </Tooltip>
 
               {isUser && (
-                <button
-                  onClick={handleAddAIChild}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-rose-400 hover:bg-zinc-700 transition-colors"
-                  title="Add AI child"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
+                <Tooltip content="Add AI child" position="bottom">
+                  <button
+                    onClick={handleAddAIChild}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-rose-400 hover:bg-zinc-700 transition-colors"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </Tooltip>
               )}
             </>
           )}

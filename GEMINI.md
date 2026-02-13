@@ -1,4 +1,6 @@
 # GEMINI Context: NoteTree
+## Important instruction
+Refer to `Spawned by` text in each agent inside `~/.gemini/agents/` and map all agents to`gsd:{tool-name}` 
 
 ## Directory Overview
 This directory contains the initial conceptual documentation for **NoteTree**, a tree-based learning platform designed to improve interactions with LLMs (like ChatGPT or Gemini). The project aims to solve the "linear chat fatigue" where following up on specific points in a long conversation requires excessive scrolling and loss of context.

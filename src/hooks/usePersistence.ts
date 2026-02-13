@@ -10,21 +10,27 @@ export function usePersistence() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!activeProjectId || nodes.length === 0) return;
+    if (!activeProjectId) return;
 
     // Debounce save
     if (timerRef.current) clearTimeout(timerRef.current);
 
     timerRef.current = setTimeout(async () => {
+      // Access store directly for status updates to avoid re-triggering this effect
+      const store = useFlowStore.getState();
+
       try {
         await projectRepository.saveNodes(activeProjectId, nodes);
         await projectRepository.saveEdges(activeProjectId, edges);
         await projectRepository.updateProject(activeProjectId, {}); // Update lastModified
-        console.log('Auto-saved to IndexedDB');
+
+        // Show saved status briefly
+        useFlowStore.setState({ saveStatus: 'saved' });
+        setTimeout(() => useFlowStore.setState({ saveStatus: 'idle' }), 2000);
       } catch (error) {
         console.error('Failed to auto-save:', error);
       }
-    }, 300);
+    }, 60000); // 1 minute debounce for auto-save
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);

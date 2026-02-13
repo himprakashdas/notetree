@@ -15,6 +15,7 @@ export const projectRepository = {
       createdAt: now,
       lastModified: now,
       systemPrompt: 'You are a helpful creative writing assistant that helps brainstorm and organize ideas in a tree structure.',
+      model: 'gemini-2.5-flash',
     };
     await db.projects.add(project);
     return project;
@@ -37,19 +38,27 @@ export const projectRepository = {
 
   // Node & Edge persistence
   async saveNodes(projectId: string, nodes: NoteTreeNode[]) {
-    const dbNodes: DBNode[] = nodes.map(node => ({
-      ...node,
-      projectId
-    }));
-    return db.nodes.bulkPut(dbNodes);
+    return db.transaction('rw', db.nodes, async () => {
+      // Clear all existing nodes for this project before saving current state
+      await db.nodes.where('projectId').equals(projectId).delete();
+      const dbNodes: DBNode[] = nodes.map(node => ({
+        ...node,
+        projectId
+      }));
+      return db.nodes.bulkPut(dbNodes);
+    });
   },
 
   async saveEdges(projectId: string, edges: NoteTreeEdge[]) {
-    const dbEdges: DBEdge[] = edges.map(edge => ({
-      ...edge,
-      projectId
-    }));
-    return db.edges.bulkPut(dbEdges);
+    return db.transaction('rw', db.edges, async () => {
+      // Clear all existing edges for this project before saving current state
+      await db.edges.where('projectId').equals(projectId).delete();
+      const dbEdges: DBEdge[] = edges.map(edge => ({
+        ...edge,
+        projectId
+      }));
+      return db.edges.bulkPut(dbEdges);
+    });
   },
 
   async getProjectData(projectId: string) {
@@ -68,9 +77,9 @@ export const projectRepository = {
   },
 
   async getAIContext(
-    projectId: string, 
-    parentNodeId: string, 
-    providedNodes?: NoteTreeNode[], 
+    projectId: string,
+    parentNodeId: string,
+    providedNodes?: NoteTreeNode[],
     providedEdges?: NoteTreeEdge[]
   ): Promise<{ systemPrompt: string; contextNodes: NoteTreeNode[] }> {
     const project = await db.projects.get(projectId);
@@ -91,7 +100,7 @@ export const projectRepository = {
       childToParent.set(edge.target, edge.source);
     });
 
-    // 1. Find Ancestor Path for parentNodeId
+    // 1. Find Ancestor Path for parentNodeId (the direct line)
     const path: NoteTreeNode[] = [];
     let currentId: string | undefined = parentNodeId;
     while (currentId) {
@@ -104,30 +113,9 @@ export const projectRepository = {
       }
     }
 
-    // 2. Pruning: Root + 3 most recent ancestors
-    const root = path[0];
-    const recentAncestors = path.slice(-3);
-    
-    const contextNodesSet = new Set<NoteTreeNode>();
-    if (root) contextNodesSet.add(root);
-    recentAncestors.forEach(n => contextNodesSet.add(n));
-
-    // 3. Uncles: Siblings of parentNodeId
-    const grandParentId = childToParent.get(parentNodeId);
-    if (grandParentId) {
-      const siblingsIds = parentToChildren.get(grandParentId) || [];
-      siblingsIds.forEach(id => {
-        const node = nodeMap.get(id);
-        if (node && id !== parentNodeId) {
-          contextNodesSet.add(node);
-        }
-      });
-    }
-
-    // 4. Return unique nodes sorted by createdAt
-    const contextNodes = Array.from(contextNodesSet).sort((a, b) => 
-      (a.data.createdAt || 0) - (b.data.createdAt || 0)
-    );
+    // 2. Pruning: Only provide the last 3 nodes for linear context
+    // This removes horizontal "pollution" from siblings/uncles
+    const contextNodes = path.slice(-3);
 
     return {
       systemPrompt: project.systemPrompt,

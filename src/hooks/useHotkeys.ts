@@ -13,36 +13,53 @@ export const useHotkeys = () => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Avoid triggering shortcuts when typing in an input or textarea
+      // 1. Avoid triggering shortcuts when typing in an input or textarea
       if (
         event.target instanceof HTMLInputElement ||
         event.target instanceof HTMLTextAreaElement ||
         (event.target as HTMLElement).isContentEditable
       ) {
-        // Still allow Cmd+Enter to branch even when focused in an editor
-        if (!((event.metaKey || event.ctrlKey) && event.key === 'Enter')) {
-          return;
-        }
-        // Stop propagation for the special case
-        event.stopPropagation();
+        return;
       }
 
-      // Trigger deletion modal for selected node
+      const metaOrCtrl = event.metaKey || event.ctrlKey;
+      const key = event.key.toLowerCase();
+
+      // 2. Undo: Cmd+Z
+      if (metaOrCtrl && key === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        useFlowStore.temporal.getState().undo();
+        return;
+      }
+
+      // 3. Redo: Cmd+Shift+Z or Cmd+Y
+      if (
+        (metaOrCtrl && key === 'z' && event.shiftKey) ||
+        (metaOrCtrl && key === 'y')
+      ) {
+        event.preventDefault();
+        useFlowStore.temporal.getState().redo();
+        return;
+      }
+
+      // 4. Trigger deletion modal for selected node
       if (event.key === 'Delete' || (event.key === 'Backspace' && event.metaKey)) {
         const selectedNodes = getNodes().filter((n) => n.selected);
         if (selectedNodes.length === 1) {
           setDeletingNodeId(selectedNodes[0].id);
         }
+        return;
       }
 
-      // Cmd+Enter or Ctrl+Enter to branch from selected node
-      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+      // 5. Cmd+Enter or Ctrl+Enter to branch from selected node
+      if (metaOrCtrl && event.key === 'Enter') {
         event.preventDefault();
         const selectedNodes = getNodes().filter((n) => n.selected);
         if (selectedNodes.length === 1) {
           const selectedNode = selectedNodes[0];
           const parentId = selectedNode.id;
-          
+
+          if (selectedNode.data.thinking) return;
           let newNode;
           if (selectedNode.data.type === 'user') {
             newNode = addAIChild(parentId);
@@ -52,12 +69,13 @@ export const useHotkeys = () => {
 
           if (newNode) {
             // Auto-pan to the new node
-            setCenter(newNode.position.x + 125, newNode.position.y + 100, { 
+            setCenter(newNode.position.x + 125, newNode.position.y + 100, {
               duration: 800,
-              zoom: 1 
+              zoom: 1
             });
           }
         }
+        return;
       }
     };
 

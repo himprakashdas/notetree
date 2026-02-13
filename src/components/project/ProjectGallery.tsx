@@ -35,23 +35,11 @@ export function ProjectGallery() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-6xl mx-auto">
-        <header className="flex justify-between items-center mb-12">
-          <div className="flex items-center gap-4">
-            <img src="/favicon.png" alt="NoteTree Logo" className="w-12 h-12" />
-            <div>
-              <h1 className="text-4xl font-bold text-primary mb-1 tracking-tight">NoteTree</h1>
-              <p className="text-gray-400">Contextual hierarchical learning space</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setIsCreating(true)}
-            className="flex items-center gap-2 bg-primary hover:bg-rose-600 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            <Plus size={20} />
-            New Project
-          </button>
+    <div className="h-full bg-black text-white p-12 overflow-y-auto custom-scrollbar">
+      <div className="max-w-5xl mx-auto">
+        <header className="mb-12">
+          <h2 className="text-3xl font-bold text-zinc-100 mb-2">Welcome to NoteTree</h2>
+          <p className="text-zinc-500">Pick a project from the sidebar to continue your learning journey.</p>
         </header>
 
         {isCreating && (
@@ -94,7 +82,7 @@ export function ProjectGallery() {
                 <p className="text-gray-500 text-xl">No projects yet. Create one to get started!</p>
               </div>
             )}
-            
+
             {projects.map((project) => (
               <div
                 key={project.id}

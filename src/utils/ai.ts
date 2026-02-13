@@ -1,12 +1,12 @@
 import { NoteTreeNode, NoteTreeEdge } from '../types';
 import { projectRepository } from '../db/repository';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const genAI = new GoogleGenerativeAI(API_KEY);
+const ai = new GoogleGenAI({ apiKey: API_KEY });
 
-export const getGeminiModel = (modelName = "gemini-2.0-flash") => {
-  return genAI.getGenerativeModel({ model: modelName });
+export const getGeminiModelName = (modelName = "gemini-2.5-flash") => {
+  return modelName;
 };
 
 export interface GeminiMessage {
@@ -26,18 +26,6 @@ export interface ContextSnapshot {
 export function formatPrompt(systemPrompt: string, contextNodes: NoteTreeNode[]): GeminiMessage[] {
   const messages: GeminiMessage[] = [];
 
-  // Start with system prompt if provided
-  if (systemPrompt) {
-    messages.push({
-      role: 'user',
-      parts: [{ text: `Instructions: ${systemPrompt}` }],
-    });
-    messages.push({
-      role: 'model',
-      parts: [{ text: 'I understand and will follow these instructions.' }],
-    });
-  }
-
   contextNodes.forEach((node) => {
     const text = node.data.label + (node.data.content ? `\n\n${node.data.content}` : '');
     if (!text.trim()) return;
@@ -56,10 +44,6 @@ export function formatPrompt(systemPrompt: string, contextNodes: NoteTreeNode[])
     }
   });
 
-  // Gemini history MUST start with user role and end with model role if it's a history
-  // but startChat accepts history that ends with either. 
-  // However, it MUST alternate.
-  
   return messages;
 }
 
@@ -67,15 +51,37 @@ export function formatPrompt(systemPrompt: string, contextNodes: NoteTreeNode[])
  * Creates a snapshot of the context for a given node.
  */
 export async function createContextSnapshot(
-  projectId: string, 
-  nodeId: string, 
-  nodes?: NoteTreeNode[], 
+  projectId: string,
+  nodeId: string,
+  nodes?: NoteTreeNode[],
   edges?: NoteTreeEdge[]
 ): Promise<ContextSnapshot> {
   const { systemPrompt, contextNodes } = await projectRepository.getAIContext(projectId, nodeId, nodes, edges);
-  
+
   return {
     systemPrompt,
     history: formatPrompt(systemPrompt, contextNodes),
   };
+}
+
+/**
+ * Helper to get the GenAI client instance
+ */
+export const getGenAIClient = () => ai;
+
+/**
+ * SDK-native token counting
+ */
+export async function countTokens(model = "gemini-2.5-flash", contents: GeminiMessage[], systemInstruction?: string) {
+  try {
+    const response = await ai.models.countTokens({
+      model,
+      contents,
+      config: systemInstruction ? { systemInstruction } : undefined
+    });
+    return response.totalTokens;
+  } catch (error) {
+    console.error('Error counting tokens:', error);
+    return 0;
+  }
 }

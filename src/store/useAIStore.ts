@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ContextSnapshot, getGeminiModel } from '../utils/ai';
+import { ContextSnapshot, getGenAIClient, countTokens } from '../utils/ai';
 import { useFlowStore } from './useFlowStore';
 import { projectRepository } from '../db/repository';
 import { useAppStore } from './useAppStore';
@@ -13,19 +13,47 @@ interface QueueItem {
 interface AIState {
   queue: QueueItem[];
   isProcessing: boolean;
+  abortControllers: Record<string, AbortController>;
   enqueue: (nodeId: string, snapshot: ContextSnapshot) => void;
   processNext: () => Promise<void>;
+  stopGeneration: (nodeId: string) => void;
 }
 
 export const useAIStore = create<AIState>((set, get) => ({
   queue: [],
   isProcessing: false,
+  abortControllers: {},
 
   enqueue: (nodeId: string, snapshot: ContextSnapshot) => {
     set((state) => ({
       queue: [...state.queue, { nodeId, snapshot }],
     }));
     get().processNext();
+  },
+
+  stopGeneration: (nodeId: string) => {
+    const { abortControllers } = get();
+
+    // 1. Abort if currently processing
+    if (abortControllers[nodeId]) {
+      abortControllers[nodeId].abort();
+    }
+
+    // 2. Remove from queue if pending (not currently processing)
+    set((state) => ({
+      queue: state.queue.filter((item, index) => {
+        // If it's currently processing (index 0), keep it so processNext can clean it up
+        if (index === 0 && state.isProcessing && item.nodeId === nodeId) return true;
+        return item.nodeId !== nodeId;
+      }),
+      // Clean up controller record if it's not the one processing
+      abortControllers: Object.fromEntries(
+        Object.entries(state.abortControllers).filter(([id]) => id !== nodeId || (state.isProcessing && state.queue[0]?.nodeId === id))
+      )
+    }));
+
+    // 3. Delete node from flow store
+    useFlowStore.getState().deleteNodeOnly(nodeId);
   },
 
   processNext: async () => {
@@ -36,135 +64,180 @@ export const useAIStore = create<AIState>((set, get) => ({
 
     const item = queue[0];
     const { nodeId, snapshot } = item;
-    const projectId = useAppStore.getState().activeProject?.id;
-    
+
+    // Add abort controller for this node
+    const controller = new AbortController();
+    set(state => ({
+      abortControllers: { ...state.abortControllers, [nodeId]: controller }
+    }));
+
+    const activeProject = useAppStore.getState().activeProject;
+    const modelName = activeProject?.model || "gemini-2.5-flash";
+
     let retryCount = 0;
     const maxRetries = 3;
     const backoff = [1000, 2000, 4000];
+    let accumulatedText = '';
 
-    while (retryCount <= maxRetries) {
-      try {
-        console.log(`[AI Queue] Processing node ${nodeId} (Attempt ${retryCount + 1})...`);
-        
-        const model = getGeminiModel();
-        
-        const history = [...snapshot.history];
-        const lastMessage = history.pop();
-        
-        if (!lastMessage) {
-          throw new Error("No message history found for AI generation");
-        }
+    try {
+      while (retryCount <= maxRetries) {
+        try {
+          if (controller.signal.aborted) break;
 
-        const chat = model.startChat({
-          history: history,
-        });
+          console.log(`[AI Queue] Processing node ${nodeId} (Attempt ${retryCount + 1})...`);
 
-        const result = await chat.sendMessageStream(lastMessage.parts[0].text);
-        
-        let accumulatedText = '';
-        let chunkCount = 0;
-        let isFirstChunk = true;
-        let wasSafetyBlocked = false;
+          const client = getGenAIClient();
+          const history = snapshot.history;
 
-        for await (const chunk of result.stream) {
-          // Task 2: Safety Filter Handling
-          const finishReason = chunk.candidates?.[0]?.finishReason;
-          if (finishReason === 'SAFETY') {
-            accumulatedText += "\n\n⚠️ Content Blocked: This response was filtered by safety settings.";
-            useFlowStore.getState().updateNodeContent(nodeId, accumulatedText);
-            useFlowStore.getState().updateNodeThinking(nodeId, false);
-            if (projectId) {
-              await projectRepository.updateNodeContent(projectId, nodeId, accumulatedText);
+          if (history.length === 0) {
+            throw new Error("No message history found for AI generation");
+          }
+
+          // Task 3: Token Counting Integration
+          const tokenCount = await countTokens(modelName, history, snapshot.systemPrompt);
+          console.log(`[AI Queue] Prompt tokens: ${tokenCount}`);
+
+          // Task 2: "Resume" Logic - if we have accumulated text from a previous failed attempt, 
+          // we could potentially append it. But for now, we just retry the full generation.
+          // If we wanted to "resume", we'd need to handle partial turns.
+
+          const result = await client.models.generateContentStream({
+            model: modelName,
+            config: {
+              systemInstruction: snapshot.systemPrompt,
+            },
+            contents: history,
+          });
+
+          let chunkCount = 0;
+          let isFirstChunk = true;
+          let wasSafetyBlocked = false;
+
+          // Reset accumulated text for this attempt if we want a fresh start, 
+          // or keep it if we implement true resume.
+          accumulatedText = '';
+
+          for await (const chunk of result) {
+            if (controller.signal.aborted) break;
+
+            // Safety Filter Handling
+            // In @google/genai, we check chunk.candidates[0].finishReason
+            const candidate = chunk.candidates?.[0];
+            const finishReason = candidate?.finishReason;
+
+            if (finishReason === 'SAFETY') {
+              accumulatedText += "\n\n⚠️ Content Blocked: This response was filtered by safety settings.";
+              useFlowStore.getState().updateNodeContent(nodeId, accumulatedText);
+              useFlowStore.getState().updateNodeThinking(nodeId, false);
+              if (activeProject?.id) {
+                await projectRepository.updateNodeContent(activeProject.id, nodeId, accumulatedText);
+              }
+              wasSafetyBlocked = true;
+              break;
             }
-            wasSafetyBlocked = true;
-            break; 
+
+            let chunkText = "";
+            try {
+              chunkText = chunk.text || "";
+            } catch (e) {
+              console.warn("Could not get text from chunk (might be blocked):", e);
+            }
+
+            accumulatedText += chunkText;
+            chunkCount++;
+
+            // Update UI
+            useFlowStore.getState().updateNodeContent(nodeId, accumulatedText);
+
+            if (isFirstChunk) {
+              useFlowStore.getState().updateNodeThinking(nodeId, false);
+              isFirstChunk = false;
+            }
+
+            // Throttled Persistence (every 10 chunks)
+            if (activeProject?.id && chunkCount % 10 === 0) {
+              projectRepository.updateNodeContent(activeProject.id, nodeId, accumulatedText);
+            }
           }
 
-          let chunkText = "";
-          try {
-            chunkText = chunk.text();
-          } catch (e) {
-            console.warn("Could not get text from chunk (might be blocked):", e);
+          if (controller.signal.aborted) {
+            console.log(`[AI Queue] Generation for ${nodeId} aborted by user.`);
+            break;
           }
 
-          accumulatedText += chunkText;
-          chunkCount++;
+          if (wasSafetyBlocked) {
+            break; // Exit retry loop on safety block
+          }
 
-          // Update UI
-          useFlowStore.getState().updateNodeContent(nodeId, accumulatedText);
-          
-          if (isFirstChunk) {
+          // Final save
+          if (activeProject?.id) {
+            await projectRepository.updateNodeContent(activeProject.id, nodeId, accumulatedText);
+          }
+
+          console.log(`[AI Queue] Finished node ${nodeId}`);
+          break; // Success
+        } catch (error: any) {
+          if (controller.signal.aborted) break;
+
+          console.error(`[AI Queue] Error on attempt ${retryCount + 1}:`, error);
+
+          const errorMessage = error instanceof Error ? error.message : String(error);
+
+          // @google/genai specific error handling
+          const isAuthError = error.status === 401 || errorMessage.toLowerCase().includes('unauthorized') || errorMessage.toLowerCase().includes('api key');
+          const isQuotaError = error.status === 429 || errorMessage.toLowerCase().includes('quota');
+
+          if (isAuthError) {
+            toast.error("Invalid API Key. Please check your settings.", { duration: 10000 });
             useFlowStore.getState().updateNodeThinking(nodeId, false);
-            isFirstChunk = false;
+            useFlowStore.getState().deleteNodeOnly(nodeId);
+            break;
           }
 
-          // Task 3: Throttled Persistence (every 10 chunks)
-          if (projectId && chunkCount % 10 === 0) {
-            projectRepository.updateNodeContent(projectId, nodeId, accumulatedText);
+          if (isQuotaError) {
+            toast.error("API Quota exceeded. Please try again later.", { duration: 10000 });
+            useFlowStore.getState().updateNodeThinking(nodeId, false);
+            useFlowStore.getState().deleteNodeOnly(nodeId);
+            break;
           }
-        }
 
-        if (wasSafetyBlocked) {
-          break; // Exit retry loop on safety block
-        }
+          // Connectivity error check
+          const isConnectivityError =
+            error.status === 503 ||
+            error.status === 504 ||
+            errorMessage.includes('fetch failed') ||
+            errorMessage.includes('Network Error') ||
+            errorMessage.includes('Failed to fetch') ||
+            errorMessage.includes('Deadline Exceeded');
 
-        // Final save
-        if (projectId) {
-          await projectRepository.updateNodeContent(projectId, nodeId, accumulatedText);
-        }
-        
-        console.log(`[AI Queue] Finished node ${nodeId}`);
-        break; // Success
-      } catch (error: any) {
-        console.error(`[AI Queue] Error on attempt ${retryCount + 1}:`, error);
-        
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const isAuthError = errorMessage.includes('401') || errorMessage.toLowerCase().includes('unauthorized') || errorMessage.toLowerCase().includes('api key');
-        const isQuotaError = errorMessage.includes('429') || errorMessage.toLowerCase().includes('quota');
-        
-        if (isAuthError) {
-          toast.error("Invalid API Key. Please check your settings.", { duration: 10000 });
-          useFlowStore.getState().updateNodeThinking(nodeId, false);
-          useFlowStore.getState().deleteNodeOnly(nodeId);
-          break;
-        }
-
-        if (isQuotaError) {
-          toast.error("API Quota exceeded. Please try again later.", { duration: 10000 });
-          useFlowStore.getState().updateNodeThinking(nodeId, false);
-          useFlowStore.getState().deleteNodeOnly(nodeId);
-          break;
-        }
-
-        // Connectivity error check
-        const isConnectivityError = 
-          errorMessage.includes('fetch failed') || 
-          errorMessage.includes('Network Error') || 
-          errorMessage.includes('Failed to fetch') ||
-          errorMessage.includes('Deadline Exceeded') ||
-          errorMessage.includes('503') || 
-          errorMessage.includes('504');
-
-        if (isConnectivityError && retryCount < maxRetries) {
-          const delayTime = backoff[retryCount];
-          useFlowStore.getState().updateNodeContent(nodeId, `Retrying in ${delayTime / 1000}s...`);
-          await new Promise(resolve => setTimeout(resolve, delayTime));
-          retryCount++;
-        } else {
-          // Final failure
-          toast.error(`Failed to generate response: ${errorMessage}`, { duration: 10000 });
-          useFlowStore.getState().updateNodeThinking(nodeId, false);
-          useFlowStore.getState().deleteNodeOnly(nodeId);
-          break;
+          if (isConnectivityError && retryCount < maxRetries) {
+            const delayTime = backoff[retryCount];
+            useFlowStore.getState().updateNodeContent(nodeId, `Retrying in ${delayTime / 1000}s...`);
+            await new Promise(resolve => setTimeout(resolve, delayTime));
+            retryCount++;
+          } else {
+            // Final failure
+            toast.error(`Failed to generate response: ${errorMessage}`, { duration: 10000 });
+            useFlowStore.getState().updateNodeThinking(nodeId, false);
+            useFlowStore.getState().deleteNodeOnly(nodeId);
+            break;
+          }
         }
       }
-    }
+    } finally {
+      // Cleanup controller
+      set(state => {
+        const newControllers = { ...state.abortControllers };
+        delete newControllers[nodeId];
+        return { abortControllers: newControllers };
+      });
 
-    set((state) => ({
-      queue: state.queue.slice(1),
-      isProcessing: false,
-    }));
-    // Recurse to process next item
-    get().processNext();
+      set((state) => ({
+        queue: state.queue.slice(1),
+        isProcessing: false,
+      }));
+      // Recurse to process next item
+      get().processNext();
+    }
   },
 }));

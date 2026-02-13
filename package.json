@@ -13,17 +13,23 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google/genai": "^1.41.0",
     "@google/generative-ai": "^0.24.1",
+    "@types/lodash.debounce": "^4.0.9",
     "@xyflow/react": "^12.10.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dexie": "^4.3.0",
+    "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.564.0",
     "nanoid": "^5.1.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
+    "zundo": "^2.3.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

@@ -6,12 +6,15 @@ interface AppState {
   projects: Project[];
   activeProject: Project | null;
   isLoading: boolean;
-  
+  fontSize: 'small' | 'medium' | 'large';
+
   // Actions
   fetchProjects: () => Promise<void>;
   setActiveProject: (project: Project | null) => void;
+  updateActiveProject: (updates: Partial<Project>) => Promise<void>;
   createProject: (name: string) => Promise<Project>;
   deleteProject: (id: string) => Promise<void>;
+  setFontSize: (size: 'small' | 'medium' | 'large') => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -34,6 +37,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ activeProject: project });
   },
 
+  updateActiveProject: async (updates) => {
+    const { activeProject } = get();
+    if (!activeProject) return;
+
+    const updatedProject = { ...activeProject, ...updates };
+    await projectRepository.updateProject(activeProject.id, updates);
+    set({ activeProject: updatedProject });
+  },
+
   createProject: async (name) => {
     const project = await projectRepository.createProject(name);
     await get().fetchProjects();
@@ -46,5 +58,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({ activeProject: null });
     }
     await get().fetchProjects();
+  },
+  fontSize: (localStorage.getItem('notetree-font-size') as any) || 'medium',
+  setFontSize: (size) => {
+    localStorage.setItem('notetree-font-size', size);
+    set({ fontSize: size });
   },
 }));
