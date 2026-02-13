@@ -12,7 +12,6 @@ import {
     LayoutGrid,
     RefreshCw,
     Check,
-    Type,
     Edit2
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -28,8 +27,6 @@ export function Sidebar() {
         fetchProjects,
         createProject,
         deleteProject,
-        fontSize,
-        setFontSize,
         renameProject
     } = useAppStore();
     const { clearData, saveStatus, forceSave } = useFlowStore();
@@ -203,35 +200,6 @@ export function Sidebar() {
                             <span className="text-xs text-zinc-600">No projects found</span>
                         </div>
                     )}
-                </div>
-            </div>
-
-            {/* Settings Quick Access */}
-            <div className="px-4 py-4 border-t border-zinc-900 bg-zinc-950/30">
-                <div className="flex items-center justify-between gap-2 overflow-hidden">
-                    <div className="flex items-center gap-2 group">
-                        <div className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-500 group-hover:text-zinc-300 transition-colors">
-                            <Type className="w-3.5 h-3.5" />
-                        </div>
-                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Text Size</span>
-                    </div>
-
-                    <div className="flex items-center bg-zinc-900 rounded-lg p-1 border border-zinc-800">
-                        {(['small', 'medium', 'large'] as const).map((size) => (
-                            <button
-                                key={size}
-                                onClick={() => setFontSize(size)}
-                                className={clsx(
-                                    "px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition-all",
-                                    fontSize === size
-                                        ? "bg-rose-500 text-white shadow-sm"
-                                        : "text-zinc-500 hover:text-zinc-300"
-                                )}
-                            >
-                                {size === 'small' ? 'S' : size === 'medium' ? 'M' : 'L'}
-                            </button>
-                        ))}
-                    </div>
                 </div>
             </div>
 

@@ -10,7 +10,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { nanoid } from 'nanoid';
-import { ChevronLeft, Plus, Maximize, Loader2, Settings, X, RefreshCw, Check, Unlink, Eraser, GitGraph, Undo2, Redo2 } from 'lucide-react';
+import { ChevronLeft, Plus, Maximize, Loader2, Settings, X, RefreshCw, Check, Unlink, Eraser, GitGraph, Undo2, Redo2, Type } from 'lucide-react';
 
 import { useFlowStore } from '../../store/useFlowStore';
 import { useAppStore } from '../../store/useAppStore';
@@ -51,7 +51,7 @@ const FlowCanvasInternal = () => {
     reLayoutTree
   } = useFlowStore();
 
-  const { activeProject, setActiveProject, updateActiveProject, renameProject } = useAppStore();
+  const { activeProject, setActiveProject, updateActiveProject, renameProject, fontSize, setFontSize } = useAppStore();
   const activeProjectId = activeProject?.id;
   const { fitView, setCenter } = useReactFlow();
 
@@ -197,7 +197,26 @@ const FlowCanvasInternal = () => {
       </div>
 
       {/* HUD - Top Right */}
-      <div className={`absolute top-6 right-6 z-10 flex items-center transition-opacity duration-300 ${(isEditing || isDeleting) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`absolute top-6 right-6 z-10 flex items-center gap-2 transition-opacity duration-300 ${(isEditing || isDeleting) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        {/* Text Size Selector */}
+        <div className="flex items-center bg-zinc-900/50 backdrop-blur-md rounded-lg p-1 border border-zinc-800 shadow-xl">
+          {(['small', 'medium', 'large'] as const).map((size) => (
+            <Tooltip key={size} content={`${size.charAt(0).toUpperCase() + size.slice(1)} text`} position="bottom">
+              <button
+                onClick={() => setFontSize(size)}
+                className={clsx(
+                  "px-2.5 py-1.5 rounded-md text-xs font-bold uppercase transition-all",
+                  fontSize === size
+                    ? "bg-rose-500 text-white shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+                )}
+              >
+                {size === 'small' ? 'S' : size === 'medium' ? 'M' : 'L'}
+              </button>
+            </Tooltip>
+          ))}
+        </div>
+
         <Tooltip content="Adjust AI instructions and model" position="left">
           <button
             onClick={() => setShowSettings(!showSettings)}
