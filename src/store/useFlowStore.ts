@@ -315,8 +315,8 @@ export const useFlowStore = create<FlowState>()(
         const { nodes, edges } = get();
         if (nodes.length === 0) return;
 
-        const MIN_H_GAP = 50; // Minimum horizontal gap between siblings
-        const MIN_V_GAP = 50; // Minimum vertical gap between levels
+        const MIN_H_GAP = 80; // Minimum horizontal gap between siblings
+        const MIN_V_GAP = 60; // Minimum vertical gap between levels
         const newNodes = [...nodes];
         const processed = new Set<string>();
 
@@ -325,11 +325,21 @@ export const useFlowStore = create<FlowState>()(
           const node = newNodes.find(n => n.id === nodeId);
           if (!node) return { width: 250, height: 120 }; // Default dimensions
 
-          // Ensure dimensions are numbers
-          const width = typeof node.style?.width === 'number' ? node.style.width :
-            typeof node.width === 'number' ? node.width : 250;
-          const height = typeof node.style?.height === 'number' ? node.style.height :
-            typeof node.height === 'number' ? node.height : 120;
+          // ReactFlow stores dimensions in multiple places:
+          // 1. measured (after resize) - most accurate
+          // 2. style.width/height
+          // 3. width/height properties
+          let width = 250;
+          let height = 120;
+
+          // Check measured dimensions first (most accurate after resize)
+          if (node.measured?.width) width = node.measured.width;
+          else if (typeof node.style?.width === 'number') width = node.style.width;
+          else if (typeof node.width === 'number') width = node.width;
+
+          if (node.measured?.height) height = node.measured.height;
+          else if (typeof node.style?.height === 'number') height = node.style.height;
+          else if (typeof node.height === 'number') height = node.height;
 
           return { width, height };
         };
