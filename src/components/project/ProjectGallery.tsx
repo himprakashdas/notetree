@@ -38,9 +38,12 @@ export function ProjectGallery() {
     <div className="min-h-screen bg-black text-white p-8">
       <div className="max-w-6xl mx-auto">
         <header className="flex justify-between items-center mb-12">
-          <div>
-            <h1 className="text-4xl font-bold text-primary mb-2">NoteTree</h1>
-            <p className="text-gray-400">Your contextual hierarchical learning space</p>
+          <div className="flex items-center gap-4">
+            <img src="/favicon.png" alt="NoteTree Logo" className="w-12 h-12" />
+            <div>
+              <h1 className="text-4xl font-bold text-primary mb-1 tracking-tight">NoteTree</h1>
+              <p className="text-gray-400">Contextual hierarchical learning space</p>
+            </div>
           </div>
           <button
             onClick={() => setIsCreating(true)}
