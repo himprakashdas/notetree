@@ -3,11 +3,11 @@
 ## Phase 1: Foundation (Infinite Canvas & Persistence)
 *Goal: Establish the visual workspace and local data storage.*
 **Plans:** 5 plans
-- [ ] phase-1-01-PLAN.md — Setup environment, Dexie, and flat-mapped Zustand store.
-- [ ] phase-1-02-PLAN.md — Implement React Flow canvas and custom ChatNode.
-- [ ] phase-1-03-PLAN.md — Core branching interaction and auto-pan logic.
-- [ ] phase-1-04-PLAN.md — Chat overlay modal and real-time auto-save.
-- [ ] phase-1-05-PLAN.md — Project Gallery and advanced node deletion.
+- [ ] phase-1-01-PLAN.md — Foundation & Persistence Setup (Project Gallery & Dexie)
+- [ ] phase-1-02-PLAN.md — The Infinite Canvas (React Flow & Custom Nodes)
+- [ ] phase-1-03-PLAN.md — Interaction & Branching (Tree growth & Navigation)
+- [ ] phase-1-04-PLAN.md — Chat Overlay & Sync (Editor & Real-time persistence)
+- [ ] phase-1-05-PLAN.md — Node Management & Polish (Deletion logic & Branding)
 
 ## Phase 2: Core AI Integration (Branching & Context)
 *Goal: Enable the core "Tree Learning" value proposition.*

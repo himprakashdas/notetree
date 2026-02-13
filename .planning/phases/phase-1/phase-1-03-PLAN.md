@@ -4,28 +4,31 @@ plan: 03
 type: execute
 wave: 3
 depends_on: ["phase-1-02"]
-files_modified: [src/components/ChatNode.tsx, src/store/useTreeStore.ts, src/hooks/useShortcuts.ts]
+files_modified:
+  - src/components/canvas/ChatNode.tsx
+  - src/store/useFlowStore.ts
+  - src/components/canvas/FlowCanvas.tsx
+  - src/hooks/useHotkeys.ts
 autonomous: true
-
 must_haves:
   truths:
-    - "Hovering a node shows a plus button"
-    - "Clicking plus creates a child node and edge"
-    - "Canvas centers on newly created nodes automatically"
+    - "Hovering a node shows a '+' button"
+    - "Clicking '+' creates a child node and pans to it"
+    - "User can use Space to pan and Cmd+Enter to branch"
   artifacts:
-    - path: "src/hooks/useShortcuts.ts"
+    - path: "src/hooks/useHotkeys.ts"
       provides: "Keyboard shortcut management"
   key_links:
-    - from: "src/components/ChatNode.tsx"
-      to: "src/store/useTreeStore.ts"
-      via: "branchFromNode action"
+    - from: "src/components/canvas/ChatNode.tsx"
+      to: "src/store/useFlowStore.ts"
+      via: "addChildNode action"
 ---
 
 <objective>
-Implement the core branching interaction, including the hover UI and auto-pan behavior.
+Implement the core branching interaction and canvas navigation helpers.
 
-Purpose: Enable the non-linear growth of the conversation tree.
-Output: A "plus" button on node hover that creates child nodes and automatically pans the view.
+Purpose: Enable building the tree structure and navigating efficiently.
+Output: Hover-based node creation, auto-pan logic, and keyboard shortcuts.
 </objective>
 
 <execution_context>
@@ -34,6 +37,8 @@ Output: A "plus" button on node hover that creates child nodes and automatically
 </execution_context>
 
 <context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
 @.planning/Phase1-CONTEXT.md
 @.planning/phases/phase-1/phase-1-02-SUMMARY.md
 </context>
@@ -41,42 +46,57 @@ Output: A "plus" button on node hover that creates child nodes and automatically
 <tasks>
 
 <task type="auto">
-  <name>Branching UI & Logic</name>
-  <files>src/components/ChatNode.tsx, src/store/useTreeStore.ts</files>
+  <name>Node Branching Interaction</name>
+  <files>src/components/canvas/ChatNode.tsx, src/store/useFlowStore.ts</files>
   <action>
-    1. Update `ChatNode.tsx` to show a "+" button on hover.
-    2. Implement `branchFromNode` action in `useTreeStore.ts`:
-       - Create a new node at an offset from the parent.
-       - Create an edge from parent to child.
-       - Set `parentId` on the new node.
-    3. Connect the "+" button to the `branchFromNode` action.
+    Add a "+" button to the ChatNode component that appears on hover.
+    Implement `addChildNode` action in useFlowStore:
+    - Generate unique ID for new node and edge.
+    - Calculate child position with vertical offset (e.g., parent.y + 200) and horizontal jitter or centering.
+    - Set child role (alternate: if parent is User, child is AI).
+    - Update nodes and edges state.
   </action>
-  <verify>Hover over a node, click the "+" button, and verify a child node and edge are created.</verify>
-  <done>Users can create child nodes via a hover interaction.</done>
+  <verify>Hovering a node shows '+'; clicking it adds a child node connected by an edge.</verify>
+  <done>Core "Branching" interaction works as described in the PRD.</done>
 </task>
 
 <task type="auto">
-  <name>Auto-Pan & Keyboard Shortcuts</name>
-  <files>src/components/Canvas.tsx, src/hooks/useShortcuts.ts</files>
+  <name>Auto-Pan & Navigation Utilities</name>
+  <files>src/components/canvas/FlowCanvas.tsx, src/store/useFlowStore.ts</files>
   <action>
-    1. Implement "Auto-Pan" logic in `Canvas.tsx`: when a new node is added, use `setCenter` to focus on the new child.
-    2. Create `src/hooks/useShortcuts.ts`: Implement `Cmd+Enter` to branch from the currently focused/selected node.
+    Integrate `useReactFlow` hook to control viewport.
+    Implement auto-pan: When a child is created, call `fitView` or `setCenter` targeting the new node with a smooth duration.
+    Add a "Fit to View" floating button in the canvas HUD (bottom-left) using Lucide 'Maximize' icon.
   </action>
-  <verify>Verify that branching triggers a smooth transition/pan to the new node. Test `Cmd+Enter` shortcut.</verify>
-  <done>Navigation and interaction are enhanced with auto-panning and shortcuts.</done>
+  <verify>Creating a child node automatically centers the screen on it; Fit to View button works.</verify>
+  <done>Canvas navigation supports the tree growth pattern.</done>
+</task>
+
+<task type="auto">
+  <name>Canvas Keyboard Shortcuts</name>
+  <files>src/hooks/useHotkeys.ts, src/components/canvas/FlowCanvas.tsx</files>
+  <action>
+    Create a custom hook `useHotkeys` (using native event listeners or a library like react-hotkeys-hook).
+    Implement:
+    - `Delete`: Delete selected node(s) - simple for now.
+    - `Space`: (Built-in to React Flow) ensure it's not blocked.
+    - `Cmd+Enter`: If a node is selected, trigger branching (same as clicking '+').
+  </action>
+  <verify>Cmd+Enter on a selected node creates a child; Delete key removes node.</verify>
+  <done>Power users can build the tree via keyboard.</done>
 </task>
 
 </tasks>
 
 <verification>
-Create a lineage of 3-4 nodes. Verify that the canvas pans to each new node. Use `Cmd+Enter` to create a node.
+1. Create a root node.
+2. Hover the root and click '+'. Verify child node creation and auto-pan.
+3. Select a child node and press Cmd+Enter. Verify grandchild creation.
+4. Click "Fit to View" to see the whole tree.
 </verification>
 
 <success_criteria>
-- Hovering a node reveals a "+" button.
-- Clicking "+" creates a connected child node.
-- The canvas automatically centers on newly created nodes.
-- `Cmd+Enter` triggers branching for the selected node.
+Branching is the primary way to grow the tree, accompanied by smooth camera transitions.
 </success_criteria>
 
 <output>

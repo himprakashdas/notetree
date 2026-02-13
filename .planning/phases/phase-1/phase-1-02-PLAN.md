@@ -4,30 +4,35 @@ plan: 02
 type: execute
 wave: 2
 depends_on: ["phase-1-01"]
-files_modified: [src/components/Canvas.tsx, src/components/ChatNode.tsx, src/App.tsx]
+files_modified:
+  - src/store/useFlowStore.ts
+  - src/components/canvas/FlowCanvas.tsx
+  - src/components/canvas/ChatNode.tsx
+  - src/App.tsx
 autonomous: true
-
 must_haves:
   truths:
-    - "Canvas shows a dot grid"
-    - "Root node can be created via Start Chat button"
-    - "Nodes use custom Rose/White/Black styling"
+    - "User can see a grid-background infinite canvas"
+    - "User sees a 'Start chat' button on an empty canvas"
+    - "Clicking 'Start chat' creates a root User node"
   artifacts:
-    - path: "src/components/Canvas.tsx"
-      provides: "Infinite canvas workspace"
-    - path: "src/components/ChatNode.tsx"
-      provides: "Custom styled node component"
+    - path: "src/components/canvas/FlowCanvas.tsx"
+      provides: "Main React Flow wrapper"
+    - path: "src/components/canvas/ChatNode.tsx"
+      provides: "Custom node UI"
+    - path: "src/store/useFlowStore.ts"
+      provides: "React Flow state management"
   key_links:
-    - from: "src/components/Canvas.tsx"
-      to: "src/store/useTreeStore.ts"
-      via: "useTreeStore selector for nodes/edges"
+    - from: "src/components/canvas/FlowCanvas.tsx"
+      to: "src/store/useFlowStore.ts"
+      via: "React Flow props and Store hooks"
 ---
 
 <objective>
-Implement the React Flow infinite canvas and a custom ChatNode with base styling and resizing capabilities.
+Setup the React Flow canvas with a custom node type and the initial "Start" state.
 
-Purpose: Establish the visual interface for the conversation tree.
-Output: A functional infinite canvas that can render custom nodes and a "Start Chat" root node.
+Purpose: Provide the visual environment for the tree structure.
+Output: Functional infinite canvas with a custom ChatNode and root creation logic.
 </objective>
 
 <execution_context>
@@ -36,53 +41,71 @@ Output: A functional infinite canvas that can render custom nodes and a "Start C
 </execution_context>
 
 <context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/phases/phase-1/RESEARCH.md
 @.planning/Phase1-CONTEXT.md
-@.planning/research/ARCHITECTURE.md
 @.planning/phases/phase-1/phase-1-01-SUMMARY.md
 </context>
 
 <tasks>
 
 <task type="auto">
-  <name>Infinite Canvas Setup</name>
-  <files>src/components/Canvas.tsx, src/App.tsx</files>
+  <name>Setup React Flow Store & Canvas</name>
+  <files>src/store/useFlowStore.ts, src/components/canvas/FlowCanvas.tsx</files>
   <action>
-    1. Create `Canvas.tsx` using `@xyflow/react`.
-    2. Include `Background` (dot grid), `Controls`, and `MiniMap`.
-    3. Add a "Fit to View" button in the Controls.
-    4. Sync the canvas `nodes` and `edges` with `useTreeStore`.
-    5. Disable manual edge drawing.
-    6. Implement a "Start Chat" button overlay that appears when the canvas is empty. This button should trigger adding a root node at (0,0).
+    Create useFlowStore using Zustand, following the pattern in RESEARCH.md.
+    Implement onNodesChange, onEdgesChange, and basic node/edge state.
+    Setup FlowCanvas component:
+    - ReactFlow component with Background (variant="dots").
+    - Integration with useFlowStore.
+    - Custom 'chatNode' type mapping.
+    - Disable manual edge connections (edgesReconnectable={false}, etc.).
   </action>
-  <verify>Verify the canvas renders with a dot grid and the "Start Chat" button appears on an empty canvas.</verify>
-  <done>Canvas is initialized and synced with the Zustand store.</done>
+  <verify>Canvas renders with a dot grid; zooming and panning works.</verify>
+  <done>Infinite canvas is ready for custom nodes.</done>
 </task>
 
 <task type="auto">
-  <name>Custom ChatNode Implementation</name>
-  <files>src/components/ChatNode.tsx</files>
+  <name>Implement ChatNode Component</name>
+  <files>src/components/canvas/ChatNode.tsx</files>
   <action>
-    1. Create `ChatNode.tsx` as a custom React Flow node.
-    2. Apply styling: Fixed initial width, Rose (`#F43F5E`) border/accent, White (`#FFFFFF`) background.
-    3. Use `NodeResizer` from `@xyflow/react` to allow user-controlled resizing.
-    4. Implement visual distinction for "User" vs "AI" nodes.
-    5. Add a simple text preview area that displays the node's content.
+    Create a custom ChatNode component for React Flow.
+    - Fixed initial width (e.g., 250px).
+    - Styling for 'user' vs 'ai' roles (User: darker/neutral, AI: subtle color tint or Rose border).
+    - Display node content (data.label) in a simple div.
+    - Include Handle components (Target on top, Source on bottom).
+    - Handle visual selection states.
   </action>
-  <verify>Confirm that nodes can be added, they use the custom styling, and they can be resized by the user.</verify>
-  <done>Custom ChatNode is functional with resizing and project-specific styling.</done>
+  <verify>Nodes render with distinct styles for user/ai roles.</verify>
+  <done>Custom node UI reflects NoteTree's design requirements.</done>
+</task>
+
+<task type="auto">
+  <name>Empty State & Root Node Creation</name>
+  <files>src/components/canvas/FlowCanvas.tsx, src/App.tsx</files>
+  <action>
+    Implement "Start chat" button overlay for empty canvases.
+    - Appears centered when `nodes.length === 0`.
+    - Clicking it adds a 'user' ChatNode at (0, 0) and hides the button.
+    Ensure FlowCanvas is rendered in App.tsx when a project is active.
+    Add a "Back to Gallery" button in a top-left HUD to return to the project list.
+  </action>
+  <verify>Selecting a project shows the 'Start chat' button; clicking it spawns the first node.</verify>
+  <done>Initial entry into the canvas allows starting a new tree.</done>
 </task>
 
 </tasks>
 
 <verification>
-Click "Start Chat", verify a root node appears on the canvas. Try dragging it, resizing it, and using "Fit to View".
+1. Select a project from the gallery.
+2. Verify "Start chat" button appears.
+3. Click "Start chat" and verify a node appears at the center.
+4. Zoom and pan around the node.
 </verification>
 
 <success_criteria>
-- React Flow canvas is visible with a dot grid.
-- "Start Chat" button creates a root node.
-- Custom ChatNode reflects the Rose/White/Black branding.
-- Nodes are resizable via `NodeResizer`.
+User can enter a project, see an infinite canvas, and create the first node.
 </success_criteria>
 
 <output>

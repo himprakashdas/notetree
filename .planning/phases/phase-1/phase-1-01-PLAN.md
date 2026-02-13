@@ -4,30 +4,37 @@ plan: 01
 type: execute
 wave: 1
 depends_on: []
-files_modified: [package.json, tailwind.config.js, src/db/db.ts, src/store/useTreeStore.ts, src/main.tsx, src/App.tsx]
+files_modified:
+  - package.json
+  - src/db/schema.ts
+  - src/db/repository.ts
+  - src/store/useAppStore.ts
+  - src/components/project/ProjectGallery.tsx
+  - src/App.tsx
 autonomous: true
-
 must_haves:
   truths:
-    - "Vite dev server starts without errors"
-    - "Dexie database is initialized in the browser"
-    - "Zustand store is accessible and has flat-map structure"
+    - "User can create a new project and see it in the gallery"
+    - "User can delete a project from the gallery"
+    - "The app opens to the Project Gallery by default"
   artifacts:
-    - path: "src/db/db.ts"
-      provides: "Dexie database schema"
-    - path: "src/store/useTreeStore.ts"
-      provides: "Zustand flat-map store"
+    - path: "src/db/schema.ts"
+      provides: "Dexie database definition"
+    - path: "src/store/useAppStore.ts"
+      provides: "Project management state"
+    - path: "src/components/project/ProjectGallery.tsx"
+      provides: "Project selection UI"
   key_links:
-    - from: "src/store/useTreeStore.ts"
-      to: "src/db/db.ts"
-      via: "syncToDB action"
+    - from: "src/components/project/ProjectGallery.tsx"
+      to: "src/db/repository.ts"
+      via: "Direct DB calls or Store actions"
 ---
 
 <objective>
-Setup the project environment and establish the local persistence layer using Dexie.js and Zustand.
+Establish the project foundation, local database schema, and the project entry point (Gallery).
 
-Purpose: Provide a robust foundation for DAG state management and local-first persistence.
-Output: A running Vite app with a configured database and a flat-mapped state store.
+Purpose: Enable project-based organization and ensure local persistence from the start.
+Output: Initialized React project with Dexie schema and a functional Project Gallery.
 </objective>
 
 <execution_context>
@@ -37,51 +44,66 @@ Output: A running Vite app with a configured database and a flat-mapped state st
 
 <context>
 @.planning/PROJECT.md
-@.planning/STATE.md
-@.planning/research/STACK.md
-@.planning/research/ARCHITECTURE.md
+@.planning/ROADMAP.md
+@.planning/phases/phase-1/RESEARCH.md
+@.planning/Phase1-CONTEXT.md
 </context>
 
 <tasks>
 
 <task type="auto">
-  <name>Environment Setup</name>
-  <files>package.json, tailwind.config.js, src/main.tsx, src/App.tsx</files>
+  <name>Setup Project & Dependencies</name>
+  <files>package.json, tailwind.config.js, src/index.css</files>
   <action>
-    Initialize the project using Vite (React + TypeScript). 
-    Install dependencies: `zustand`, `@xyflow/react`, `dexie`, `dexie-react-hooks`, `uuid`.
-    Install dev dependencies: `tailwindcss`, `postcss`, `autoprefixer`, `@types/uuid`.
-    Configure Tailwind with the Rose/White/Black theme specified in Phase1-CONTEXT.md.
-    Setup basic project structure: `src/components`, `src/store`, `src/db`, `src/hooks`.
+    Initialize a Vite + React + TypeScript project. 
+    Install core dependencies: @xyflow/react, zustand, dexie, lucide-react, nanoid, clsx, tailwind-merge, date-fns.
+    Setup Tailwind CSS with the Rose primary color (#F43F5E) and Dark theme defaults (Black background).
+    Configure basic folder structure: src/components, src/db, src/store, src/hooks, src/types, src/utils.
   </action>
-  <verify>Run `npm run dev` and confirm the app loads.</verify>
-  <done>Vite project is running with all necessary libraries and Tailwind configured.</done>
+  <verify>npm list shows installed dependencies; npm run dev starts without error.</verify>
+  <done>Project is scaffolded with required libraries and Tailwind colors.</done>
 </task>
 
 <task type="auto">
-  <name>Dexie & Zustand Foundation</name>
-  <files>src/db/db.ts, src/store/useTreeStore.ts</files>
+  <name>Initialize Dexie DB Schema & Repository</name>
+  <files>src/db/schema.ts, src/db/repository.ts, src/types/index.ts</files>
   <action>
-    1. Create `src/db/db.ts`: Define Dexie database `NoteTreeDB` with tables `projects`, `nodes`, and `edges`. Use materialized paths for nodes as suggested in ARCHITECTURE.md.
-    2. Create `src/store/useTreeStore.ts`: Implement Zustand store using the flat-map pattern (Record<string, Node>). 
-    3. Implement `saveProject`, `loadProject`, and `syncToDB` actions in the store.
-    4. Ensure `nodes` and `edges` are stored separately to align with React Flow requirements.
+    Implement the Dexie schema as defined in RESEARCH.md.
+    Define tables: 'projects' (id, name, createdAt, lastModified), 'nodes' (id, projectId, data, type, position), 'edges' (id, projectId, source, target).
+    Create a repository layer for CRUD operations on projects.
+    Define TypeScript interfaces for Project, NodeData, and FlowElements.
   </action>
-  <verify>Verify that calling `addNode` in the store results in an entry in IndexedDB (check DevTools -> Application -> IndexedDB).</verify>
-  <done>Persistence layer is functional with a flat-mapped Zustand store syncing to Dexie.</done>
+  <verify>Dexie DB initializes in DevTools -> Application -> IndexedDB.</verify>
+  <done>Persistence layer is ready for project and node storage.</done>
+</task>
+
+<task type="auto">
+  <name>Implement Project Gallery & App Store</name>
+  <files>src/store/useAppStore.ts, src/components/project/ProjectGallery.tsx, src/App.tsx</files>
+  <action>
+    Create useAppStore to manage 'activeProject' and 'projects' list.
+    Build ProjectGallery component: 
+    - Display list of projects with name and last modified date.
+    - "New Project" button (creates project in DB, updates store, sets as active).
+    - "Delete" icon on project cards with simple confirmation.
+    Update App.tsx to conditionally render ProjectGallery if no activeProject is set.
+    Use Lucide icons for project actions.
+  </action>
+  <verify>User can create a project, see it in the list, and select it (clearing the gallery view).</verify>
+  <done>User can manage projects before entering the infinite canvas.</done>
 </task>
 
 </tasks>
 
 <verification>
-Confirm that the app boots and that nodes added to the Zustand store persist across page refreshes via Dexie.
+1. Run `npm run dev`.
+2. Open Browser -> Application -> IndexedDB -> NoteTreeDB.
+3. Create 2 projects. Verify they appear in UI and DB.
+4. Delete 1 project. Verify it is removed from UI and DB.
 </verification>
 
 <success_criteria>
-- Vite + React + TS environment is ready.
-- Tailwind is configured with the project color palette.
-- Zustand store manages nodes/edges using a flat map.
-- Dexie.js successfully persists and retrieves state from IndexedDB.
+Project Gallery allows creation and deletion of local projects stored in IndexedDB.
 </success_criteria>
 
 <output>

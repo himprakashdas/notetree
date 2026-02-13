@@ -4,31 +4,34 @@ plan: 05
 type: execute
 wave: 5
 depends_on: ["phase-1-04"]
-files_modified: [src/components/ProjectGallery.tsx, src/store/useTreeStore.ts, src/components/DeletionPrompt.tsx, src/App.tsx]
-autonomous: false
-user_setup: []
-
+files_modified:
+  - src/components/canvas/DeletionModal.tsx
+  - src/store/useFlowStore.ts
+  - src/components/canvas/ChatNode.tsx
+  - src/index.css
+autonomous: true
 must_haves:
   truths:
-    - "User starts at a Project Gallery view"
-    - "Deleting a node shows a prompt with 3 specific options"
-    - "Deleting a node and descendants removes the entire subtree"
+    - "Deleting a node shows a prompt with 3 options"
+    - "User can delete a node and its entire subtree"
+    - "Nodes can be resized by the user"
+    - "UI uses Rose/White/Black branding with NoteTree logos"
   artifacts:
-    - path: "src/components/ProjectGallery.tsx"
-      provides: "Project listing and creation"
-    - path: "src/components/DeletionPrompt.tsx"
-      provides: "Custom deletion logic UI"
+    - path: "src/components/canvas/DeletionModal.tsx"
+      provides: "Complex deletion UI"
+    - path: "notetree-logos/icon-logo.png"
+      provides: "Favicon/App Icon"
   key_links:
-    - from: "src/components/ProjectGallery.tsx"
-      to: "src/store/useTreeStore.ts"
-      via: "loadProject action"
+    - from: "src/store/useFlowStore.ts"
+      to: "recursive deletion logic"
+      via: "deleteNodeSubtree action"
 ---
 
 <objective>
-Implement the Project Gallery entry point and the advanced node deletion logic.
+Implement advanced node management (recursive deletion, resizing) and apply final visual branding.
 
-Purpose: Provide user-facing management of multiple conversation trees and safe node removal.
-Output: A gallery view for selecting projects and a multi-option deletion system.
+Purpose: Polish the user experience and establish the project's visual identity.
+Output: Integrated deletion modal, resizable nodes, and themed UI.
 </objective>
 
 <execution_context>
@@ -37,6 +40,8 @@ Output: A gallery view for selecting projects and a multi-option deletion system
 </execution_context>
 
 <context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
 @.planning/Phase1-CONTEXT.md
 @.planning/phases/phase-1/phase-1-04-SUMMARY.md
 </context>
@@ -44,60 +49,44 @@ Output: A gallery view for selecting projects and a multi-option deletion system
 <tasks>
 
 <task type="auto">
-  <name>Project Gallery</name>
-  <files>src/components/ProjectGallery.tsx, src/App.tsx</files>
+  <name>Advanced Node Deletion Logic</name>
+  <files>src/components/canvas/DeletionModal.tsx, src/store/useFlowStore.ts</files>
   <action>
-    1. Create `ProjectGallery.tsx` as the default view.
-    2. Fetch all projects from Dexie and display them as cards.
-    3. Include a "New Project" button.
-    4. Implement "Open Project" logic.
-    5. Add branding using logos in `notetree-logos/`.
+    Create DeletionModal with 3 buttons: "Cancel", "Only this node", "Node and all descendants".
+    Implement store actions:
+    - `deleteNodeOnly`: Remove node and its incoming/outgoing edges. Children remain (orphaned).
+    - `deleteNodeAndDescendants`: Recursively find all children of the target node and remove them all.
+    Trigger this modal when 'Delete' is pressed or a delete button in the UI is clicked.
   </action>
-  <verify>Open the app, confirm the Gallery is shown, and clicking "New Project" opens the canvas.</verify>
-  <done>User can manage multiple projects through a gallery interface.</done>
+  <verify>Deleting a parent with 'Descendants' option clears the whole branch.</verify>
+  <done>Node lifecycle management respects the tree structure.</done>
 </task>
 
 <task type="auto">
-  <name>Advanced Deletion Logic</name>
-  <files>src/components/DeletionPrompt.tsx, src/store/useTreeStore.ts</files>
+  <name>Node Resizing & Visual Polish</name>
+  <files>src/components/canvas/ChatNode.tsx, src/index.css</files>
   <action>
-    1. Create `DeletionPrompt.tsx`: Modal triggered by `Delete` key.
-    2. Implement the three options: Cancel, Delete only this node, Delete node and all descendants.
-    3. Implement recursive deletion in `useTreeStore`.
+    Integrate `NodeResizer` from `@xyflow/react` into ChatNode.
+    - Limit resizing to horizontal only (optional) or both.
+    - Ensure resizing is saved to DB via the persistence hook.
+    Apply final Rose (#F43F5E) accents to buttons and selected states.
+    Setup App Icon and Logo in the Gallery and Canvas HUD.
   </action>
-  <verify>Create a tree, select a middle node, press Delete, and test all three options.</verify>
-  <done>Node deletion handles subtrees correctly per user choice.</done>
-</task>
-
-<task type="checkpoint:human-verify">
-  <name>Final Phase 1 Verification</name>
-  <action>Confirm full integration of Phase 1 features.</action>
-  <what-built>Full Phase 1 Foundation: Gallery, Canvas, Branching, Overlay, and Deletion.</what-built>
-  <how-to-verify>
-    1. Open app, see Gallery.
-    2. Create "Test Project".
-    3. Add root node via "Start Chat".
-    4. Branch 3 nodes deep.
-    5. Edit content in Overlay, verify persistence after refresh.
-    6. Delete a middle node and choose "Delete descendants" - verify subtree is gone.
-    7. Return to Gallery and see the project card.
-  </how-to-verify>
-  <verify>Type "approved" or describe issues</verify>
-  <done>Full phase 1 features are verified and working as expected.</done>
+  <verify>Nodes show resize handles when selected; UI colors match branding.</verify>
+  <done>Visual workspace is polished and professional.</done>
 </task>
 
 </tasks>
 
 <verification>
-Perform a full end-to-end walkthrough of creating, branching, editing, and deleting a project.
+1. Create a tree with multiple branches.
+2. Delete a middle node choosing "Node and all descendants". Verify the branch disappears.
+3. Resize a node and verify it stays that size after refresh.
+4. Verify the Rose color is used for primary actions.
 </verification>
 
 <success_criteria>
-- App opens to Project Gallery.
-- Multiple projects can be created and saved.
-- Branching and Auto-Pan feel fluid.
-- Deletion prompt correctly manages the DAG structure.
-- Logos and branding are applied correctly.
+Complete foundational feature set with polished interactions and branding.
 </success_criteria>
 
 <output>
