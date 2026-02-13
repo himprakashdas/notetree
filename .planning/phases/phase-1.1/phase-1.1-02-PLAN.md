@@ -11,16 +11,26 @@ must_haves:
   truths:
     - "Hovering a node reveals a triple-icon bar (Delete, Plus, Send)"
     - "Clicking 'Send' in ChatOverlay creates an AI child and closes the overlay"
-    - "'Send' icon only appears on User nodes"
+    - "'Send' icon only appears on User nodes in the hover bar"
+    - "Plus button on an AI node creates a User child (Reply) by default"
   artifacts:
     - path: "src/components/canvas/ChatNode.tsx"
       provides: "Triple-Action Hover Bar"
     - path: "src/components/chat/ChatOverlay.tsx"
       provides: "Actionable editor with Send button"
+  key_links:
+    - from: "src/components/canvas/ChatNode.tsx"
+      to: "src/store/useFlowStore.ts"
+      via: "addBranch / addAIChild calls"
+      pattern: "useFlowStore\\.getState\\(\\)\\.(addBranch|addAIChild)"
+    - from: "src/components/chat/ChatOverlay.tsx"
+      to: "src/store/useFlowStore.ts"
+      via: "addAIChild call"
+      pattern: "useFlowStore\\.getState\\(\\)\\.addAIChild"
 ---
 
 <objective>
-Implement the primary interaction UI for rapid tree growth. This plan introduces the Triple-Action Hover Bar on nodes and refines the Chat Overlay with an immediate 'Send' action.
+Implement the primary interaction UI for rapid tree growth. This plan introduces the Triple-Action Hover Bar on nodes and refines the Chat Overlay with an immediate 'Send' action, ensuring it respects the turn-based "Reply" logic.
 
 Purpose: Streamline the "Turn-based" creation flow.
 Output: Hover action bar on nodes and Send button in Overlay.
@@ -49,18 +59,19 @@ Output: Hover action bar on nodes and Send button in Overlay.
   <action>
     - Replace the single Plus button with a centered Hover Bar (Zinc-800, border-Zinc-700) containing:
         - Trash2 (Left): Wire to `setDeletingNodeId`.
-        - Plus (Center): Wire to `addSiblingNode`.
-        - Send (Right, User only): Wire to `addAIChildNode`.
+        - Plus (Center): Wire to `addBranch(nodeId)`. (This triggers the smart logic from Plan 01: User->User Sibling, AI->User Child).
+        - Send (Right, User only): Wire to `addAIChild(nodeId)`.
     - Ensure the bar only appears on node hover (`group-hover:opacity-100`).
     - Use `e.stopPropagation()` on all icon clicks.
   </action>
   <verify>
-    - Hover node: Bar appears.
-    - Click icons: Verify respective actions trigger.
-    - Check that Send only shows for User nodes.
+    - Hover User node: Bar shows Delete, Plus, Send.
+    - Hover AI node: Bar shows Delete, Plus (Send hidden).
+    - Click Plus on AI node: Verify it creates a User child (Reply).
+    - Click Plus on User node: Verify it creates a User sibling.
   </verify>
   <done>
-    Hover bar is functional and correctly styled.
+    Hover bar is functional and correctly styled, respecting turn-based logic.
   </done>
 </task>
 
@@ -70,7 +81,7 @@ Output: Hover action bar on nodes and Send button in Overlay.
   <action>
     - Add a "Send" button to the `ChatOverlay` footer (right-aligned).
     - Style it with Rose-500 background if the current node is User.
-    - Behavior: Clicking Send should call `addAIChildNode(editingNodeId)` and then `setEditingNodeId(null)` immediately.
+    - Behavior: Clicking Send should call `addAIChild(editingNodeId)` and then `setEditingNodeId(null)` immediately.
     - Ensure it is only enabled if the node has content.
   </action>
   <verify>
@@ -86,12 +97,13 @@ Output: Hover action bar on nodes and Send button in Overlay.
 </tasks>
 
 <verification>
-- Verify hover bar visibility and actions.
+- Verify hover bar visibility and actions on different node roles.
 - Verify Overlay Send button creates child and closes overlay.
 </verification>
 
 <success_criteria>
 - Rapid branching is possible via hover bar.
+- Turn-based "Reply" loop is completed (AI -> User child).
 - Overlay flow is efficient with immediate send/close.
 </success_criteria>
 

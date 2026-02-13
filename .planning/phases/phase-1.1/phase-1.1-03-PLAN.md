@@ -18,6 +18,15 @@ must_haves:
       provides: "Visual polish and constraints"
     - path: "src/store/useFlowStore.ts"
       provides: "Auto-pan logic"
+  key_links:
+    - from: "src/components/canvas/ChatNode.tsx"
+      to: "src/store/useFlowStore.ts"
+      via: "data prop usage"
+      pattern: "data\\.thinking"
+    - from: "src/store/useFlowStore.ts"
+      to: "@xyflow/react"
+      via: "fitView/setCenter"
+      pattern: "reactflow\\.fitView"
 ---
 
 <objective>
@@ -66,7 +75,7 @@ Output: Translucent thinking nodes, text truncation, and auto-centering canvas.
   <files>src/components/canvas/ChatNode.tsx, src/store/useFlowStore.ts</files>
   <action>
     - Update `NodeResizer` in `ChatNode.tsx` with constraints: `minWidth={200}`, `minHeight={80}`, `maxWidth={600}`, `maxHeight={400}`.
-    - Refine `addSiblingNode` and `addAIChildNode` in `useFlowStore.ts` (or use a hook in canvas) to trigger a `fitView` or `setCenter` call that focuses on the new node with a smooth transition (800ms).
+    - Refine `addBranch` and `addAIChild` in `useFlowStore.ts` (or use a hook in canvas) to trigger a `fitView` or `setCenter` call that focuses on the new node with a smooth transition (800ms).
   </action>
   <verify>
     - Verify resizing is blocked at min/max limits.

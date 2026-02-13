@@ -10,22 +10,35 @@ autonomous: true
 must_haves:
   truths:
     - "Canvas HUD (Back button, Title, Role Toggle) is correctly aligned to corners"
-    - "Role Toggle switches between 'User' and 'Assistant' roles"
-    - "Cmd+Enter triggers a branch: AI child for User nodes, Sibling for others (per user decision)"
+    - "Role Toggle switches between 'User' and 'Assistant' roles for the next node creation"
+    - "Cmd+Enter triggers a branch: AI child for User nodes, User child (Reply) for AI nodes"
   artifacts:
     - path: "src/store/useFlowStore.ts"
-      provides: "Atomic branching logic and nextRole state"
+      provides: "Atomic branching logic with role-overrides"
     - path: "src/components/canvas/FlowCanvas.tsx"
       provides: "Grounded layout and HUD with Role Toggle"
     - path: "src/hooks/useHotkeys.ts"
       provides: "Context-aware Cmd+Enter branching"
+  key_links:
+    - from: "src/components/canvas/FlowCanvas.tsx"
+      to: "src/store/useFlowStore.ts"
+      via: "useFlowStore selector"
+      pattern: "useFlowStore\\(.*nextRoleOverride"
+    - from: "src/store/useFlowStore.ts"
+      to: "src/types/index.ts"
+      via: "Type imports"
+      pattern: "import type.*NodeData"
+    - from: "src/hooks/useHotkeys.ts"
+      to: "src/store/useFlowStore.ts"
+      via: "Action calls"
+      pattern: "useFlowStore\\.getState\\(\\)\\.addBranch"
 ---
 
 <objective>
-Establish the refined foundation for Phase 1.1. This plan fixes Tailwind 4 grounding issues, implements the role-based state, and updates keyboard shortcuts to align with the new atomic turn-based model.
+Establish the refined foundation for Phase 1.1. This plan fixes Tailwind 4 grounding issues, implements the smart role-based branching logic, and updates keyboard shortcuts to align with the turn-based refinement.
 
 Purpose: Provide the logical and structural grounding for the refined interaction model.
-Output: Fixed layout, functional Role Toggle, and context-aware branching hotkeys.
+Output: Fixed layout, functional Role Toggle (as override), and context-aware branching hotkeys.
 </objective>
 
 <execution_context>
@@ -66,24 +79,31 @@ Output: Fixed layout, functional Role Toggle, and context-aware branching hotkey
 </task>
 
 <task type="auto">
-  <name>Task 2: Implement Role Toggle and atomic store actions</name>
+  <name>Task 2: Implement Role Toggle and Smart Branching logic</name>
   <files>src/store/useFlowStore.ts, src/types/index.ts, src/components/canvas/FlowCanvas.tsx</files>
   <action>
     - Update `src/types/index.ts`: Add `thinking?: boolean` to `NodeData`.
     - Update `src/store/useFlowStore.ts`:
-        - Add `nextRole: 'user' | 'ai'` (default 'user') and `setNextRole` action.
-        - Implement `addSiblingNode(nodeId: string)`: creates a sibling node of the SAME role, offset X+300.
-        - Implement `addAIChildNode(parentId: string)`: creates an 'ai' child node, set `thinking: true`, offset Y+200.
+        - Add `nextRoleOverride: 'user' | 'ai' | null` (default null) and `setNextRoleOverride` action.
+        - Implement `addBranch(parentId: string)`:
+            - Determine role:
+                1. If `nextRoleOverride` is set, use it and then reset override to `null`.
+                2. Else if parent node is `ai`, role = `user` (Reply/Completion loop).
+                3. Else if parent node is `user`, role = `user` (Sibling default).
+            - Position: X+300 if same role, Y+200 if role changed (child).
+        - Implement `addAIChild(parentId: string)`: creates an 'ai' child node regardless of toggle, set `thinking: true`, offset Y+200. (Used for explicit 'Send' actions).
     - Update `src/components/canvas/FlowCanvas.tsx`:
         - Add a Role Toggle switch in the top-right HUD (User vs Assistant).
-        - Use Rose-500 for Assistant and Zinc-500 for User active states.
+        - Use Rose-500 for Assistant and Zinc-500 for User states.
   </action>
   <verify>
-    - Role Toggle appears and updates store state.
-    - Store methods for sibling and AI-child exist and produce correct positions.
+    - Role Toggle appears and updates `nextRoleOverride`.
+    - `addBranch` on an AI node creates a User child by default.
+    - `addBranch` on a User node creates a User sibling by default.
+    - Setting Role Toggle to Assistant and clicking branch on User node creates an AI child.
   </verify>
   <done>
-    Role-based state and atomic branching logic are implemented.
+    Role-based state and smart branching logic are implemented.
   </done>
 </task>
 
@@ -92,13 +112,13 @@ Output: Fixed layout, functional Role Toggle, and context-aware branching hotkey
   <files>src/hooks/useHotkeys.ts</files>
   <action>
     - Update `useHotkeys.ts` to handle `Cmd+Enter` (or `Ctrl+Enter`) based on the selected node's role:
-        - If selected node is `type === 'user'`, call `addAIChildNode`.
-        - If selected node is `type === 'ai'`, call `addSiblingNode` (or appropriate logical continuation).
+        - If selected node is `user`, call `addAIChild`.
+        - If selected node is `ai`, call `addBranch` (which defaults to User child/Reply).
     - Ensure it still prevents default and stops propagation if inside an editor.
   </action>
   <verify>
     - Select a User node, press Cmd+Enter: AI child should appear.
-    - Select an AI node, press Cmd+Enter: Sibling AI node (or User child if preferred) should appear. 
+    - Select an AI node, press Cmd+Enter: User child (Reply) should appear.
   </verify>
   <done>
     Keyboard shortcuts align with the refined branching logic.
@@ -109,14 +129,14 @@ Output: Fixed layout, functional Role Toggle, and context-aware branching hotkey
 
 <verification>
 - Check HUD alignment.
-- Verify Role Toggle functionality.
-- Verify Cmd+Enter branching behavior.
+- Verify Role Toggle override functionality.
+- Verify Cmd+Enter branching behavior for both User and AI nodes.
 </verification>
 
 <success_criteria>
 - Clean, grounded canvas layout.
-- Functional Role Toggle.
-- Context-aware keyboard branching.
+- Functional Role Toggle as a creation override.
+- Context-aware keyboard branching (User -> AI child, AI -> User child).
 </success_criteria>
 
 <output>
