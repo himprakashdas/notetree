@@ -2,16 +2,16 @@
 phase: phase-2
 plan: 05
 type: execute
-wave: 4
+wave: 5
 depends_on: ["phase-2-03"]
 files_modified: [src/store/useAIStore.ts, src/components/canvas/ChatNode.tsx, src/store/useFlowStore.ts]
 autonomous: true
 
 must_haves:
   truths:
-    - "Users can stop an active AI generation"
-    - "Stopping a generation deletes the pending Assistant node"
-    - "Nodes become scrollable if content exceeds bounds"
+    - "Users can cancel active AI generations"
+    - "Cancellation deletes the generating node"
+    - "Long AI responses are scrollable within the node"
   artifacts:
     - path: "src/store/useAIStore.ts"
       provides: "AbortController management"
@@ -22,10 +22,10 @@ must_haves:
 ---
 
 <objective>
-Provide users with control over active AI generations and polish the node UI for long-form content.
+Provide users with control over active generations and ensure the UI handles long-form AI content gracefully.
 
-Purpose: Allow users to cancel unwanted generations and ensure readability of long responses.
-Output: "Stop" functionality and scrollable node content.
+Purpose: Allow cancellation of unwanted requests and improve readability.
+Output: "Stop" functionality and scrollable nodes.
 </objective>
 
 <execution_context>
@@ -43,39 +43,52 @@ Output: "Stop" functionality and scrollable node content.
 <tasks>
 
 <task type="auto">
-  <name>Task 1: Implement Stop Generation</name>
+  <name>Task 1: Implement "Stop" Generation</name>
   <files>src/store/useAIStore.ts, src/components/canvas/ChatNode.tsx</files>
   <action>
     - Add `AbortController` management to `useAIStore`.
-    - Map `nodeId` to its `AbortController` in a `controllers` record.
-    - Implement `stopGeneration(nodeId)` action:
+    - Map `nodeId` to `AbortController` in a state record.
+    - Implement `stopGeneration(nodeId)`:
       - Call `controller.abort()`.
-      - Delete the node via `useFlowStore.getState().deleteNodeOnly(nodeId)`.
-      - Remove from queue/processing.
-    - Add a "Stop" button to `ChatNode.tsx` that only appears when `thinking` or streaming is active.
+      - Delete the node from `useFlowStore`.
+      - Clean up queue and processing state.
+    - Add a "Stop" button (square icon) to `ChatNode.tsx` that only appears during generation/thinking.
   </action>
-  <verify>Start a long generation and click "Stop". Verify the node disappears and the API request is aborted.</verify>
-  <done>Users can cancel active AI generations.</done>
+  <verify>Start a generation, click 'Stop', and verify the node is removed and the stream is aborted.</verify>
+  <done>Users can interrupt unwanted AI generations.</done>
 </task>
 
 <task type="auto">
-  <name>Task 2: Node Scrollability & Sizing Polish</name>
-  <files>src/components/canvas/ChatNode.tsx, src/index.css</files>
+  <name>Task 2: Node Scrollability & Max Constraints</name>
+  <files>src/components/canvas/ChatNode.tsx</files>
   <action>
-    - Ensure `ChatNode` has `overflow-y-auto` on its content container.
-    - Set a `max-height` (consistent with Phase 1.1 limits) to force scrollbars for long content.
-    - Use Tailwind's `scrollbar-hide` or custom thin scrollbars for better aesthetics on the canvas.
+    - Update `ChatNode.tsx` styles to handle long content.
+    - Ensure the content container has `overflow-y-auto` and `scrollbar-thin`.
+    - The node should respect the `maxHeight` set by `NodeResizer` or have a default `max-h-[400px]` if not resized.
+    - Use `whitespace-pre-wrap` to preserve formatting while allowing wrapping.
   </action>
-  <verify>Generate a long response and ensure the node displays scrollbars and doesn't expand infinitely.</verify>
-  <done>Long AI responses are readable within the canvas nodes.</done>
+  <verify>Generate a long response and verify it becomes scrollable without breaking the canvas layout.</verify>
+  <done>Long responses are easily readable within the nodes.</done>
+</task>
+
+<task type="auto">
+  <name>Task 3: Basic System Prompt Support</name>
+  <files>src/store/useFlowStore.ts, src/db/repository.ts</files>
+  <action>
+    - Ensure the `Project` loaded in `useFlowStore` includes the `systemPrompt`.
+    - (Optional but recommended) Add a simple text area in the project UI (perhaps in a settings modal or a fixed HUD element) to allow editing the global system prompt.
+    - For now, ensure it is at least retrieved and used in the generation context.
+  </action>
+  <verify>Manually set a system prompt in the DB and verify it influences AI responses.</verify>
+  <done>The global system prompt is functional and integrated.</done>
 </task>
 
 </tasks>
 
 <success_criteria>
-- "Stop" button successfully aborts API calls and removes nodes.
-- Long-form content inside nodes is scrollable and constrained by min/max sizing.
-- "Thinking" state transitions cleanly to final text state.
+- "Stop" button successfully aborts and deletes nodes.
+- Long-form content is scrollable.
+- System prompt is passed to the AI as the primary instruction.
 </success_criteria>
 
 <output>

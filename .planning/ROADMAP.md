@@ -19,11 +19,11 @@
 ## Phase 2: Core AI Integration (Branching & Context)
 *Goal: Enable the core "Tree Learning" value proposition.*
 **Plans:** 5 plans
-- [ ] phase-2-01-PLAN.md — API & Context Logic (Gemini & DAG Traversal)
-- [ ] phase-2-02-PLAN.md — AI Queue Store (FIFO & Background Processing)
-- [ ] phase-2-03-PLAN.md — Streaming Integration (Real-time Canvas Updates)
-- [ ] phase-2-04-PLAN.md — Resilience & Feedback (Retries & Safety)
-- [ ] phase-2-05-PLAN.md — Controls & Refinement (Stop button & Scrollability)
+- [ ] phase-2-01-PLAN.md — Data & Context (Uncles/Siblings logic & System Prompts)
+- [ ] phase-2-02-PLAN.md — Queue & Snapshotting (FIFO logic & Context locking)
+- [ ] phase-2-03-PLAN.md — Streaming & UI Feedback (Gemini integration & "Thinking..." indicator)
+- [ ] phase-2-04-PLAN.md — Resilience & Resilience (Retries, Toasts & Safety filters)
+- [ ] phase-2-05-PLAN.md — Controls & Polish (Stop button, Scrollability & Settings)
 
 ## Phase 3: Visual Management (Focus & Organization)
 *Goal: Prevent "Tree Sprawl" and improve UI/UX.*

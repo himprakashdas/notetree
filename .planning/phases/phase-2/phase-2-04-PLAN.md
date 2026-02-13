@@ -9,23 +9,23 @@ autonomous: true
 
 must_haves:
   truths:
-    - "System automatically retries 3 times on connection failure"
-    - "API errors are displayed as floating toasts"
-    - "Safety-blocked content is handled gracefully without deleting the node"
+    - "System retries connection failures 3 times with exponential backoff"
+    - "Errors (Auth, Rate Limit) appear as floating toasts"
+    - "Safety-blocked content displays a specific message instead of deleting the node"
   artifacts:
     - path: "src/store/useAIStore.ts"
-      provides: "Exponential backoff retry logic"
+      provides: "Retry logic and safety filter checks"
   key_links:
     - from: "src/store/useAIStore.ts"
       to: "Toast Notification System"
-      via: "State trigger or event"
+      via: "sonner or custom toast call"
 ---
 
 <objective>
-Enhance the reliability of AI generations by implementing automatic retries and providing clear feedback to the user when errors occur.
+Build resilience into the AI integration by handling network failures, safety filters, and providing global feedback for unrecoverable errors.
 
-Purpose: Improve user trust and handle common API/network failures gracefully.
-Output: Robust error handling and retry mechanism.
+Purpose: Improve reliability and user trust.
+Output: Robust error handling and notification system.
 </objective>
 
 <execution_context>
@@ -45,49 +45,51 @@ Output: Robust error handling and retry mechanism.
   <name>Task 1: Implement Exponential Backoff Retries</name>
   <files>src/store/useAIStore.ts</files>
   <action>
-    - Wrap the generation logic in a retry loop.
+    - Wrap the streaming loop in a try-catch-retry structure.
     - Max retries: 3.
-    - Delay: 1s, 2s, 4s (exponential).
-    - Only retry on network/connectivity errors, not safety blocks or auth errors.
-    - Update node content to show "Retrying in X seconds..." during wait.
+    - Delays: 1s, 2s, 4s.
+    - Only retry on connectivity errors (e.g., fetch failed, network timeout).
+    - Update node content to show "Retrying in X seconds..." during the wait period.
+    - If all retries fail, delete the node and show a toast.
   </action>
-  <verify>Simulate a network failure (offline mode) and observe the retry attempts in the console/UI.</verify>
-  <done>System recovers from transient network issues automatically.</done>
+  <verify>Disconnect internet mid-stream and observe the retry attempts and eventual cleanup.</verify>
+  <done>System handles transient network issues gracefully.</done>
 </task>
 
 <task type="auto">
-  <name>Task 2: Global Error Feedback (Toasts)</name>
-  <files>src/store/useAIStore.ts, src/App.tsx</files>
-  <action>
-    - Integrate a toast library (e.g., `sonner` or a simple custom one if already chosen in Phase 1).
-    - Trigger a "Persistent, cancellable floating toast" when:
-      - Max retries exceeded.
-      - Auth error (invalid API key).
-      - Rate limit reached.
-    - Ensure toasts are displayed in the top-right as per CONTEXT.md.
-  </action>
-  <verify>Force an API error (e.g., invalid key) and verify the toast appears correctly.</verify>
-  <done>Users are notified of non-recoverable AI errors.</done>
-</task>
-
-<task type="auto">
-  <name>Task 3: Handle Safety Blocks</name>
+  <name>Task 2: Safety Filter Handling</name>
   <files>src/store/useAIStore.ts</files>
   <action>
-    - Check `candidate.finishReason === 'SAFETY'` during streaming.
-    - If blocked, stop streaming and set node content to: "⚠️ Content Blocked: This response was filtered by safety settings."
-    - Ensure the node is NOT deleted.
+    - In the stream iterator, check `chunk.candidates[0].finishReason`.
+    - If reason is 'SAFETY', stop the stream and set node content to: "⚠️ Content Blocked: This response was filtered by safety settings."
+    - Ensure the node remains on the canvas but is marked as finished.
   </action>
-  <verify>Use a prompt that triggers safety filters and check that the "Content Blocked" message is shown.</verify>
-  <done>Safety-filtered content is handled without crashing the generation flow.</done>
+  <verify>Trigger a safety filter block and verify the specific message is displayed without deleting the node.</verify>
+  <done>Safety-blocked content is handled per design requirements.</done>
+</task>
+
+<task type="auto">
+  <name>Task 3: Global Error Feedback (Toasts)</name>
+  <files>src/store/useAIStore.ts, src/App.tsx</files>
+  <action>
+    - Install `sonner` or a similar lightweight toast library.
+    - Setup the `Toaster` component in `src/App.tsx`.
+    - Trigger toasts for:
+      - Max retries exceeded.
+      - Invalid API Key (401).
+      - Quota exceeded (429).
+    - Toasts should be persistent and appear in the top-right.
+  </action>
+  <verify>Force an auth error and verify the toast notification appears correctly.</verify>
+  <done>Users receive clear feedback for unrecoverable API errors.</done>
 </task>
 
 </tasks>
 
 <success_criteria>
-- Failed requests retry up to 3 times with increasing delays.
-- Clear toast notifications appear for unrecoverable errors.
-- Safety-blocked nodes display a specific message instead of empty/broken content.
+- Failed requests retry up to 3 times before giving up.
+- Safety blocks show a ⚠️ message.
+- Toasts appear for critical failures.
 </success_criteria>
 
 <output>

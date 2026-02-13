@@ -4,7 +4,7 @@ plan: 01
 type: execute
 wave: 1
 depends_on: []
-files_modified: [src/db/repository.ts, src/utils/ai.ts, .env.example]
+files_modified: [src/types/index.ts, src/db/repository.ts, src/utils/ai.ts]
 autonomous: true
 user_setup:
   - service: Gemini API
@@ -15,25 +15,25 @@ user_setup:
 
 must_haves:
   truths:
-    - "AI context includes root node and recent ancestors"
-    - "Prompt is formatted with User/Assistant roles"
-    - "Gemini client is correctly initialized with API key"
+    - "Project model includes a global system prompt field"
+    - "Context retrieval fetches Root + 3 ancestors + Siblings of immediate parent"
+    - "Context nodes are ordered chronologically"
   artifacts:
-    - path: "src/utils/ai.ts"
-      provides: "Gemini client initialization and prompt formatting"
+    - path: "src/types/index.ts"
+      provides: "Project interface update"
     - path: "src/db/repository.ts"
-      provides: "Ancestor and sibling retrieval logic"
+      provides: "Advanced context retrieval logic"
   key_links:
-    - from: "src/utils/ai.ts"
-      to: "Gemini API"
-      via: "@google/generative-ai SDK"
+    - from: "src/db/repository.ts"
+      to: "Dexie nodes/edges tables"
+      via: "getAIContext query"
 ---
 
 <objective>
-Setup the foundational AI infrastructure including the Gemini API client and the DAG-aware context retrieval logic.
+Update the data layer to support project-level system prompts and implement the specific DAG traversal logic for context inheritance.
 
-Purpose: Provide the AI with the necessary conversation history (ancestors and siblings) to generate relevant responses.
-Output: A functional AI client and repository methods for tree traversal.
+Purpose: Provide the AI with a rich, structured memory including alternative exploration paths (uncles).
+Output: Updated types and repository methods for context retrieval.
 </objective>
 
 <execution_context>
@@ -43,62 +43,62 @@ Output: A functional AI client and repository methods for tree traversal.
 <context>
 @.planning/phases/phase-2/Phase2-CONTEXT.md
 @.planning/phases/phase-2/RESEARCH.md
-@src/db/repository.ts
 @src/types/index.ts
+@src/db/repository.ts
 </context>
 
 <tasks>
 
 <task type="auto">
-  <name>Task 1: Setup Gemini Client & Environment</name>
-  <files>.env.example, src/utils/ai.ts</files>
+  <name>Task 1: Update Project Type and Repository</name>
+  <files>src/types/index.ts, src/db/repository.ts, src/db/schema.ts</files>
   <action>
-    - Add `VITE_GEMINI_API_KEY` to `.env.example`.
-    - Create `src/utils/ai.ts` and initialize the `GoogleGenerativeAI` client using the environment variable.
-    - Export a `genAI` instance and a `getModel` helper (defaulting to gemini-1.5-flash).
-    - Note: Use `@google/generative-ai` library.
+    - Add `systemPrompt: string` to the `Project` interface in `src/types/index.ts`.
+    - Update `createProject` in `src/db/repository.ts` to initialize `systemPrompt` (default to an empty string or a generic assistant instruction).
+    - Ensure `db.version(1).stores` in `src/db/schema.ts` includes the new field if necessary (Dexie doesn't strictly require it in the store definition unless indexed, but good to check).
   </action>
-  <verify>Check that `src/utils/ai.ts` exports the client and model correctly.</verify>
-  <done>Gemini SDK is configured and ready for use.</done>
+  <verify>Check that `Project` type has the new field and `createProject` works.</verify>
+  <done>Project model supports global system instructions.</done>
 </task>
 
 <task type="auto">
-  <name>Task 2: Implement Context Retrieval in Repository</name>
+  <name>Task 2: Implement Advanced Context Retrieval</name>
   <files>src/db/repository.ts</files>
   <action>
-    - Add `getAIContext(projectId: string, nodeId: string)` to `projectRepository`.
+    - Implement `getAIContext(projectId: string, nodeId: string)` in `projectRepository`.
     - Logic:
-      1. Find the target node.
-      2. Traverse parents up to the Root (node with no parent edge).
-      3. Select Root + 3 most recent ancestors.
-      4. Find the immediate parent of the target node.
-      5. Fetch siblings of the target node (other children of the same parent).
-      6. Return a list of nodes ordered by creation time.
-    - Use Dexie queries for efficiency.
+      1. Find the parent `P` of the target node (where target node is being generated).
+      2. Ancestor Path: Traverse up from `P` to find all ancestors.
+      3. Pruning: Select the **Root Node** and the **3 most recent ancestors** of `P`.
+      4. Uncles/Alternatives: Find all siblings of `P` (nodes sharing the same parent as `P`).
+      5. Fetch the `systemPrompt` from the `Project`.
+      6. Return unique nodes from Ancestors + Uncles, sorted by `createdAt`.
+    - Use Dexie queries for the traversal.
   </action>
-  <verify>Mock nodes in a test or dev script and verify `getAIContext` returns the correct lineage.</verify>
-  <done>Repository can retrieve appropriate context for any node in the tree.</done>
+  <verify>Verify with mock data that for a node N with parent P, the context includes Root, P's siblings, and P's ancestors.</verify>
+  <done>Repository provides the specific "Memory" required by NoteTree's branching model.</done>
 </task>
 
 <task type="auto">
   <name>Task 3: Implement Prompt Formatter</name>
   <files>src/utils/ai.ts</files>
   <action>
-    - Add `formatPrompt(contextNodes: NoteTreeNode[])` utility.
-    - Convert nodes into the format required by Gemini's `startChat({ history })`.
+    - Create `src/utils/ai.ts`.
+    - Implement `formatPrompt(systemPrompt: string, contextNodes: NoteTreeNode[])`.
+    - Convert `contextNodes` into Gemini `history` objects (`{ role: 'user' | 'model', parts: [{ text: string }] }`).
     - Map `user` nodes to `user` role and `ai` nodes to `model` role.
-    - Handle edge cases where context might be empty.
+    - Include the `systemPrompt` as the first message if present.
   </action>
-  <verify>Unit test or console log with dummy data to ensure roles and parts are correctly mapped.</verify>
-  <done>Context nodes are correctly formatted for the Gemini API.</done>
+  <verify>Test with dummy nodes to ensure roles are correctly assigned and order is preserved.</verify>
+  <done>Context data is correctly formatted for the Gemini SDK.</done>
 </task>
 
 </tasks>
 
 <success_criteria>
-- Gemini client is initialized via environment variable.
-- Repository provides a `getAIContext` method that follows the "Root + 3 Ancestors + Siblings" rule.
-- Prompt formatter correctly translates node data into Gemini API history objects.
+- Project type supports `systemPrompt`.
+- `getAIContext` correctly fetches Root + 3 Ancestors + Uncles.
+- Context is sorted chronologically.
 </success_criteria>
 
 <output>

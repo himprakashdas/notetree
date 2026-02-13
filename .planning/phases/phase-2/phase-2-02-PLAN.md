@@ -4,27 +4,28 @@ plan: 02
 type: execute
 wave: 2
 depends_on: ["phase-2-01"]
-files_modified: [src/store/useAIStore.ts, src/store/useFlowStore.ts]
+files_modified: [src/store/useAIStore.ts, src/store/useFlowStore.ts, src/utils/ai.ts]
 autonomous: true
 
 must_haves:
   truths:
-    - "AI requests are processed sequentially (FIFO)"
-    - "Generations continue in the background if the canvas is unmounted"
+    - "Context is snapshotted immediately when a request is enqueued"
+    - "Requests are processed sequentially in a FIFO queue"
+    - "AI nodes automatically trigger the queue"
   artifacts:
     - path: "src/store/useAIStore.ts"
-      provides: "FIFO queue and generation management loop"
+      provides: "Zustand store with FIFO logic and snapshot storage"
   key_links:
     - from: "src/store/useFlowStore.ts"
       to: "src/store/useAIStore.ts"
-      via: "enqueue call in node creation"
+      via: "enqueue(nodeId, snapshot) call"
 ---
 
 <objective>
-Implement the FIFO queue and background generation store. This ensures that AI requests are handled in order and persist even if the user navigates away from the project view.
+Implement the AI Queue and Snapshot mechanism. This ensures that the context used for generation is locked at the moment the user clicks "Send", even if the request is queued.
 
-Purpose: Manage concurrency and ensure system reliability during heavy AI usage.
-Output: A dedicated Zustand store for AI operations.
+Purpose: Prevent mid-queue edits from affecting AI results and manage concurrency.
+Output: A robust FIFO queue that stores context snapshots.
 </objective>
 
 <execution_context>
@@ -41,42 +42,58 @@ Output: A dedicated Zustand store for AI operations.
 <tasks>
 
 <task type="auto">
-  <name>Task 1: Create useAIStore with FIFO Queue</name>
-  <files>src/store/useAIStore.ts</files>
+  <name>Task 1: Implement Context Snapshotting</name>
+  <files>src/utils/ai.ts</files>
   <action>
-    - Initialize `useAIStore` with:
-      - `queue`: Array of `{ projectId: string, nodeId: string }`.
-      - `isProcessing`: boolean.
-    - Implement `enqueue(projectId, nodeId)` action.
-    - Implement `processNext()` internal loop:
-      - If `isProcessing` or queue is empty, exit.
-      - Set `isProcessing = true`.
-      - Get first item from queue.
-      - (Stub) call to generation logic.
-      - On finish, remove from queue, set `isProcessing = false`, call `processNext()`.
+    - Add `createContextSnapshot(projectId: string, nodeId: string)` to `src/utils/ai.ts`.
+    - This function calls `projectRepository.getAIContext` and returns a structured object containing the `systemPrompt` and the `history` (formatted messages).
+    - This "locks" the text of all nodes at the current moment.
   </action>
-  <verify>Enqueue multiple items and verify they are added to the queue and processed one-by-one (using console logs for stubs).</verify>
-  <done>FIFO queue logic is functional and handles sequential processing.</done>
+  <verify>Call `createContextSnapshot` and verify it returns the current state of ancestors/uncles.</verify>
+  <done>Context can be frozen at any point in time.</done>
 </task>
 
 <task type="auto">
-  <name>Task 2: Connect FlowStore to AIStore</name>
+  <name>Task 2: Create useAIStore with FIFO & Snapshots</name>
+  <files>src/store/useAIStore.ts</files>
+  <action>
+    - Initialize `useAIStore` with:
+      - `queue`: Array of `{ nodeId: string, snapshot: any }`.
+      - `isProcessing`: boolean.
+    - Implement `enqueue(nodeId, snapshot)`:
+      - Add to queue.
+      - Call `processNext()`.
+    - Implement `processNext()`:
+      - If `isProcessing` or queue empty, return.
+      - Set `isProcessing = true`.
+      - Take first item.
+      - (Stub) start generation with `snapshot`.
+      - On finish, remove from queue, `isProcessing = false`, recurse.
+  </action>
+  <verify>Enqueue 3 items rapidly and verify they process one-by-one with their respective snapshots.</verify>
+  <done>FIFO queue correctly handles snapshotted AI requests.</done>
+</task>
+
+<task type="auto">
+  <name>Task 3: Connect FlowStore to Snapshot/Queue</name>
   <files>src/store/useFlowStore.ts</files>
   <action>
-    - Update `addAIChild` and `addBranch` (when role is AI) in `useFlowStore` to call `useAIStore.getState().enqueue(projectId, newNodeId)`.
-    - Ensure `projectId` is passed correctly to the store actions.
-    - Note: This triggers the background generation process as soon as an AI node is created.
+    - Update `addAIChild` and `addBranch` (when role is AI) in `useFlowStore`.
+    - Immediately after creating the AI node:
+      1. Call `createContextSnapshot(projectId, parentId)`.
+      2. Call `useAIStore.getState().enqueue(newNodeId, snapshot)`.
+    - Ensure this happens synchronously or within the same action flow to avoid latency.
   </action>
-  <verify>Create an AI node in the UI and check that it appears in the `useAIStore` queue.</verify>
-  <done>AI node creation automatically triggers the generation queue.</done>
+  <verify>Create an AI node and check that `useAIStore` receives the correct snapshot immediately.</verify>
+  <done>AI generation is triggered with a locked context snapshot.</done>
 </task>
 
 </tasks>
 
 <success_criteria>
-- `useAIStore` manages a persistent queue of pending AI generations.
-- Queue processing is sequential (one request at a time).
-- Creating an AI node in `useFlowStore` automatically enqueues a request in `useAIStore`.
+- AI requests are stored in a queue with their own unique context snapshots.
+- Editing an ancestor node after clicking "Send" but before processing starts does not affect the output.
+- Sequential processing is maintained.
 </success_criteria>
 
 <output>
