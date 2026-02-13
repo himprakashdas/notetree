@@ -55,7 +55,8 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
             'bg-zinc-900 text-zinc-100 shadow-xl',
             isUser ? 'border-zinc-700' : 'border-rose-500/50',
             selected && (isUser ? 'border-zinc-400' : 'border-rose-500'),
-            !isUser && 'bg-rose-950/20'
+            !isUser && 'bg-rose-950/20',
+            data.thinking && 'opacity-50'
           )
         )}
       >
@@ -69,7 +70,7 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
           <div className="text-[10px] uppercase tracking-wider font-bold text-zinc-500">
             {isUser ? 'User' : 'Assistant'}
           </div>
-          <div className="text-sm flex-grow whitespace-pre-wrap overflow-hidden">
+          <div className="text-sm flex-grow whitespace-pre-wrap overflow-hidden line-clamp-6">
             {data.label || '...'}
           </div>
         </div>
