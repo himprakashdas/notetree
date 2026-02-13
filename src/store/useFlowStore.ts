@@ -20,6 +20,7 @@ interface FlowState {
   nodes: NoteTreeNode[];
   edges: NoteTreeEdge[];
   editingNodeId: string | null;
+  deletingNodeId: string | null;
   isLoading: boolean;
   onNodesChange: OnNodesChange<NoteTreeNode>;
   onEdgesChange: OnEdgesChange<NoteTreeEdge>;
@@ -28,8 +29,10 @@ interface FlowState {
   setEdges: (edges: NoteTreeEdge[]) => void;
   addNode: (node: NoteTreeNode) => void;
   addChildNode: (parentId: string) => NoteTreeNode | undefined;
-  deleteNode: (nodeId: string) => void;
+  deleteNodeOnly: (nodeId: string) => void;
+  deleteNodeAndDescendants: (nodeId: string) => void;
   setEditingNodeId: (nodeId: string | null) => void;
+  setDeletingNodeId: (nodeId: string | null) => void;
   updateNodeContent: (nodeId: string, label: string) => void;
   loadProjectData: (projectId: string) => Promise<void>;
   clearData: () => void;
@@ -39,6 +42,7 @@ export const useFlowStore = create<FlowState>((set, get) => ({
   nodes: [],
   edges: [],
   editingNodeId: null,
+  deletingNodeId: null,
   isLoading: false,
   onNodesChange: (changes: NodeChange<NoteTreeNode>[]) => {
     set({
@@ -80,6 +84,7 @@ export const useFlowStore = create<FlowState>((set, get) => ({
         content: '',
         type: isParentUser ? 'ai' : 'user',
       },
+      style: { width: 250, height: 120 },
     };
 
     const newEdge: NoteTreeEdge = {
@@ -96,7 +101,7 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     return newNode;
   },
 
-  deleteNode: (nodeId: string) => {
+  deleteNodeOnly: (nodeId: string) => {
     set({
       nodes: get().nodes.filter((node) => node.id !== nodeId),
       edges: get().edges.filter(
@@ -105,7 +110,33 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     });
   },
 
+  deleteNodeAndDescendants: (nodeId: string) => {
+    const { nodes, edges } = get();
+    const descendants = new Set<string>();
+    
+    const findDescendants = (id: string) => {
+      edges.forEach((edge) => {
+        if (edge.source === id) {
+          descendants.add(edge.target);
+          findDescendants(edge.target);
+        }
+      });
+    };
+
+    descendants.add(nodeId);
+    findDescendants(nodeId);
+
+    set({
+      nodes: nodes.filter((node) => !descendants.has(node.id)),
+      edges: edges.filter(
+        (edge) => !descendants.has(edge.source) && !descendants.has(edge.target)
+      ),
+    });
+  },
+
   setEditingNodeId: (nodeId: string | null) => set({ editingNodeId: nodeId }),
+
+  setDeletingNodeId: (nodeId: string | null) => set({ deletingNodeId: nodeId }),
 
   updateNodeContent: (nodeId: string, label: string) => {
     set({

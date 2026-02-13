@@ -17,6 +17,7 @@ import { useHotkeys } from '../../hooks/useHotkeys';
 import { usePersistence } from '../../hooks/usePersistence';
 import ChatNode from './ChatNode';
 import ChatOverlay from '../chat/ChatOverlay';
+import { DeletionModal } from './DeletionModal';
 import { NoteTreeNode } from '../../types';
 
 const nodeTypes: NodeTypes = {
@@ -33,6 +34,10 @@ const FlowCanvasInternal = () => {
     addNode,
     setEditingNodeId,
     editingNodeId,
+    deletingNodeId,
+    setDeletingNodeId,
+    deleteNodeOnly,
+    deleteNodeAndDescendants,
     isLoading,
     loadProjectData,
     clearData
@@ -73,6 +78,7 @@ const FlowCanvasInternal = () => {
         content: '', 
         type: 'user' 
       },
+      style: { width: 250, height: 120 },
     };
     addNode(newNode);
     
@@ -82,7 +88,22 @@ const FlowCanvasInternal = () => {
     }, 50);
   }, [addNode, setCenter]);
 
+  const handleDeleteOnly = useCallback(() => {
+    if (deletingNodeId) {
+      deleteNodeOnly(deletingNodeId);
+      setDeletingNodeId(null);
+    }
+  }, [deletingNodeId, deleteNodeOnly, setDeletingNodeId]);
+
+  const handleDeleteAll = useCallback(() => {
+    if (deletingNodeId) {
+      deleteNodeAndDescendants(deletingNodeId);
+      setDeletingNodeId(null);
+    }
+  }, [deletingNodeId, deleteNodeAndDescendants, setDeletingNodeId]);
+
   const isEditing = !!editingNodeId;
+  const isDeleting = !!deletingNodeId;
 
   if (isLoading) {
     return (
@@ -96,9 +117,13 @@ const FlowCanvasInternal = () => {
   }
 
   return (
-    <div className={`w-full h-full bg-black relative ${isEditing ? 'overflow-hidden' : ''}`}>
+    <div className={`w-full h-full bg-black relative ${(isEditing || isDeleting) ? 'overflow-hidden' : ''}`}>
       {/* HUD - Top Left */}
-      <div className={`absolute top-4 left-4 z-10 flex gap-2 transition-opacity duration-300 ${isEditing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`absolute top-4 left-4 z-10 flex gap-4 items-center transition-opacity duration-300 ${(isEditing || isDeleting) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <div className="flex items-center gap-2 pr-4 border-r border-zinc-800">
+          <img src="/favicon.png" alt="Logo" className="w-6 h-6" />
+          <span className="font-bold text-rose-500 tracking-tight">NoteTree</span>
+        </div>
         <button
           onClick={handleBack}
           className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-md transition-colors text-sm font-medium"
@@ -109,7 +134,7 @@ const FlowCanvasInternal = () => {
       </div>
 
       {/* HUD - Bottom Left */}
-      <div className={`absolute bottom-4 left-4 z-10 flex gap-2 transition-opacity duration-300 ${isEditing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`absolute bottom-4 left-4 z-10 flex gap-2 transition-opacity duration-300 ${(isEditing || isDeleting) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button
           onClick={() => fitView({ duration: 800 })}
           className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-md transition-colors text-sm font-medium shadow-xl"
@@ -131,10 +156,10 @@ const FlowCanvasInternal = () => {
         fitView
         nodesConnectable={false}
         edgesReconnectable={false}
-        elementsSelectable={!isEditing}
-        nodesDraggable={!isEditing}
-        panOnDrag={!isEditing}
-        zoomOnScroll={!isEditing}
+        elementsSelectable={!isEditing && !isDeleting}
+        nodesDraggable={!isEditing && !isDeleting}
+        panOnDrag={!isEditing && !isDeleting}
+        zoomOnScroll={!isEditing && !isDeleting}
         colorMode="dark"
         paneClickDistance={5}
         deleteKeyCode={null} // Handled by useHotkeys
@@ -161,6 +186,13 @@ const FlowCanvasInternal = () => {
       )}
 
       <ChatOverlay />
+
+      <DeletionModal
+        isOpen={isDeleting}
+        onClose={() => setDeletingNodeId(null)}
+        onDeleteOnly={handleDeleteOnly}
+        onDeleteAll={handleDeleteAll}
+      />
     </div>
   );
 };

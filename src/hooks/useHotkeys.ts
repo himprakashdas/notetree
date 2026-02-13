@@ -6,8 +6,9 @@ import { useFlowStore } from '../store/useFlowStore';
  * Custom hook to handle canvas-level keyboard shortcuts.
  */
 export const useHotkeys = () => {
-  const { getNodes, deleteElements, setCenter } = useReactFlow();
+  const { getNodes, setCenter } = useReactFlow();
   const addChildNode = useFlowStore((state) => state.addChildNode);
+  const setDeletingNodeId = useFlowStore((state) => state.setDeletingNodeId);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -20,11 +21,11 @@ export const useHotkeys = () => {
         return;
       }
 
-      // Delete selected nodes
+      // Trigger deletion modal for selected node
       if (event.key === 'Delete' || (event.key === 'Backspace' && event.metaKey)) {
         const selectedNodes = getNodes().filter((n) => n.selected);
-        if (selectedNodes.length > 0) {
-          deleteElements({ nodes: selectedNodes });
+        if (selectedNodes.length === 1) {
+          setDeletingNodeId(selectedNodes[0].id);
         }
       }
 
@@ -47,5 +48,5 @@ export const useHotkeys = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [getNodes, deleteElements, addChildNode, setCenter]);
+  }, [getNodes, addChildNode, setCenter, setDeletingNodeId]);
 };
