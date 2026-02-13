@@ -6,6 +6,7 @@ import { Plus, Trash2, Send, Square } from 'lucide-react';
 import { NoteTreeNode } from '../../types';
 import { useFlowStore } from '../../store/useFlowStore';
 import { useAIStore } from '../../store/useAIStore';
+import { useAppStore } from '../../store/useAppStore';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Tooltip } from '../ui/Tooltip';
@@ -16,6 +17,7 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
   const addAIChild = useFlowStore((state) => state.addAIChild);
   const setDeletingNodeId = useFlowStore((state) => state.setDeletingNodeId);
   const stopGeneration = useAIStore((state) => state.stopGeneration);
+  const fontSize = useAppStore((state) => state.fontSize);
   const { setCenter } = useReactFlow();
 
   const handleAddBranch = (e: React.MouseEvent) => {
@@ -82,7 +84,10 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
           {isUser ? 'User' : 'Assistant'}
         </div>
 
-        <div className="text-sm flex-grow whitespace-pre-wrap overflow-y-auto custom-scrollbar pr-1 markdown-content nowheel">
+        <div className={twMerge(
+          "flex-grow whitespace-pre-wrap overflow-y-auto custom-scrollbar pr-1 markdown-content nowheel",
+          fontSize === 'small' ? 'text-xs' : fontSize === 'large' ? 'text-base' : 'text-sm'
+        )}>
           {data.thinking ? (
             <div className="flex flex-col gap-2">
               <span className="italic text-zinc-500 animate-pulse">Thinking...</span>
