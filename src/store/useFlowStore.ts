@@ -32,7 +32,6 @@ interface FlowState {
   setNextRoleOverride: (role: 'user' | 'ai' | null) => void;
   addBranch: (parentId: string) => NoteTreeNode | undefined;
   addAIChild: (parentId: string) => NoteTreeNode | undefined;
-  addChildNode: (parentId: string) => NoteTreeNode | undefined;
   deleteNodeOnly: (nodeId: string) => void;
   deleteNodeAndDescendants: (nodeId: string) => void;
   setEditingNodeId: (nodeId: string | null) => void;
@@ -156,10 +155,6 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     });
 
     return newNode;
-  },
-
-  addChildNode: (parentId: string) => {
-    return get().addBranch(parentId);
   },
 
   deleteNodeOnly: (nodeId: string) => {

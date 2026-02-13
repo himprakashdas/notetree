@@ -8,12 +8,12 @@ import { useFlowStore } from '../../store/useFlowStore';
 
 const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
   const isUser = data.type === 'user';
-  const addChildNode = useFlowStore((state) => state.addChildNode);
+  const addBranch = useFlowStore((state) => state.addBranch);
   const { setCenter } = useReactFlow();
   
-  const handleAddChild = (e: React.MouseEvent) => {
+  const handleAddBranch = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const newNode = addChildNode(id);
+    const newNode = addBranch(id);
     if (newNode) {
       // Offset to center the new node (default node width is around 250px)
       setCenter(newNode.position.x + 125, newNode.position.y + 100, { 
@@ -65,7 +65,7 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
 
         {/* Add Button */}
         <button
-          onClick={handleAddChild}
+          onClick={handleAddBranch}
           className={clsx(
             "absolute -bottom-4 left-1/2 -translate-x-1/2",
             "w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700",
