@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Send, Code, FileText } from 'lucide-react';
+import { X, Send, Code, FileText, Copy, Check } from 'lucide-react';
 import { useReactFlow } from '@xyflow/react';
 import { useFlowStore } from '../../store/useFlowStore';
 import { useAppStore } from '../../store/useAppStore';
@@ -18,6 +18,7 @@ const ChatOverlay = () => {
   const hasContent = (editingNode?.data.label?.trim().length ?? 0) > 0;
 
   const [showMarkdown, setShowMarkdown] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (editingNodeId && textareaRef.current) {
@@ -47,6 +48,18 @@ const ChatOverlay = () => {
       setEditingNodeId(null);
     }
   }, [editingNodeId, editingNode, hasContent, isUser, addAIChild, setCenter, setEditingNodeId]);
+
+  const handleCopy = React.useCallback(async () => {
+    if (!editingNode?.data.label) return;
+
+    try {
+      await navigator.clipboard.writeText(editingNode.data.label);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  }, [editingNode]);
 
   // Handle keyboard shortcuts (Global ones like Escape)
   useEffect(() => {
@@ -97,15 +110,29 @@ const ChatOverlay = () => {
 
           <div className="flex items-center gap-4">
             {!isUser && (
-              <Tooltip content={showMarkdown ? 'Show raw text' : 'Show markdown'} position="bottom">
-                <button
-                  onClick={() => setShowMarkdown(!showMarkdown)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition-colors text-xs font-medium"
-                >
-                  {showMarkdown ? <Code className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
-                  {showMarkdown ? 'Raw' : 'Markdown'}
-                </button>
-              </Tooltip>
+              <>
+                <Tooltip content={showMarkdown ? 'Show raw text' : 'Show markdown'} position="bottom">
+                  <button
+                    onClick={() => setShowMarkdown(!showMarkdown)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition-colors text-xs font-medium"
+                  >
+                    {showMarkdown ? <Code className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
+                    {showMarkdown ? 'Raw' : 'Markdown'}
+                  </button>
+                </Tooltip>
+                <Tooltip content="Copy to clipboard" position="bottom">
+                  <button
+                    onClick={handleCopy}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-xs font-medium ${copied
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                        : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+                      }`}
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                </Tooltip>
+              </>
             )}
             <div className="flex items-center bg-black border border-zinc-800 rounded-lg p-0.5">
               {(['small', 'medium', 'large'] as const).map((size) => (
