@@ -1,8 +1,8 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Handle, Position, NodeProps, useReactFlow, NodeResizer } from '@xyflow/react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { Plus, Trash2, Send, Square } from 'lucide-react';
+import { Plus, Trash2, Send, Square, Copy, Check } from 'lucide-react';
 import { NoteTreeNode } from '../../types';
 import { useFlowStore } from '../../store/useFlowStore';
 import { useAIStore } from '../../store/useAIStore';
@@ -12,6 +12,7 @@ import remarkGfm from 'remark-gfm';
 import { Tooltip } from '../ui/Tooltip';
 
 const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
+  const [copied, setCopied] = useState(false);
   const isUser = data.type === 'user';
   const addBranch = useFlowStore((state) => state.addBranch);
   const addAIChild = useFlowStore((state) => state.addAIChild);
@@ -52,6 +53,19 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
     stopGeneration(id);
   };
 
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!data.label) return;
+
+    try {
+      await navigator.clipboard.writeText(data.label);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   return (
     <>
       <NodeResizer
@@ -80,8 +94,23 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
           className="w-2 h-2 !bg-zinc-600 border-none"
         />
 
-        <div className="text-[10px] uppercase tracking-wider font-bold text-zinc-500 mb-1 shrink-0">
-          {isUser ? 'User' : 'Assistant'}
+        <div className="flex items-center justify-between mb-1 shrink-0">
+          <div className="text-[10px] uppercase tracking-wider font-bold text-zinc-500">
+            {isUser ? 'User' : 'Assistant'}
+          </div>
+          {!isUser && !data.thinking && data.label && (
+            <Tooltip content="Copy to clipboard" position="right">
+              <button
+                onClick={handleCopy}
+                className={`p-1 rounded transition-all ${copied
+                    ? 'text-emerald-400 bg-emerald-500/20'
+                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'
+                  }`}
+              >
+                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              </button>
+            </Tooltip>
+          )}
         </div>
 
         <div className={twMerge(
