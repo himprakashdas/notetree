@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import { Handle, Position, NodeProps, useReactFlow } from '@xyflow/react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { Plus } from 'lucide-react';
@@ -9,7 +9,20 @@ import { useFlowStore } from '../../store/useFlowStore';
 const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
   const isUser = data.type === 'user';
   const addChildNode = useFlowStore((state) => state.addChildNode);
+  const { setCenter } = useReactFlow();
   
+  const handleAddChild = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newNode = addChildNode(id);
+    if (newNode) {
+      // Offset to center the new node (node width is 250px)
+      setCenter(newNode.position.x + 125, newNode.position.y + 100, { 
+        duration: 800,
+        zoom: 1 
+      });
+    }
+  };
+
   return (
     <div
       className={twMerge(
@@ -45,10 +58,7 @@ const ChatNode = ({ id, data, selected }: NodeProps<NoteTreeNode>) => {
 
       {/* Add Button */}
       <button
-        onClick={(e) => {
-          e.stopPropagation();
-          addChildNode(id);
-        }}
+        onClick={handleAddChild}
         className={clsx(
           "absolute -bottom-4 left-1/2 -translate-x-1/2",
           "w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700",

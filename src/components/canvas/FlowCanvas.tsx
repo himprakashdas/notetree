@@ -4,10 +4,12 @@ import {
   Background, 
   BackgroundVariant,
   NodeTypes,
+  ReactFlowProvider,
+  useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { nanoid } from 'nanoid';
-import { ChevronLeft, Plus } from 'lucide-react';
+import { ChevronLeft, Plus, Maximize } from 'lucide-react';
 
 import { useFlowStore } from '../../store/useFlowStore';
 import { useAppStore } from '../../store/useAppStore';
@@ -18,7 +20,7 @@ const nodeTypes: NodeTypes = {
   chatNode: ChatNode,
 };
 
-const FlowCanvas = () => {
+const FlowCanvasInternal = () => {
   const { 
     nodes, 
     edges, 
@@ -29,6 +31,7 @@ const FlowCanvas = () => {
   } = useFlowStore();
 
   const { setActiveProject } = useAppStore();
+  const { fitView, setCenter } = useReactFlow();
 
   const startChat = useCallback(() => {
     const newNode: NoteTreeNode = {
@@ -42,7 +45,12 @@ const FlowCanvas = () => {
       },
     };
     addNode(newNode);
-  }, [addNode]);
+    
+    // Smoothly center on the first node
+    setTimeout(() => {
+      setCenter(125, 100, { duration: 800, zoom: 1 });
+    }, 50);
+  }, [addNode, setCenter]);
 
   return (
     <div className="w-full h-full bg-black relative">
@@ -54,6 +62,18 @@ const FlowCanvas = () => {
         >
           <ChevronLeft className="w-4 h-4" />
           Back to Gallery
+        </button>
+      </div>
+
+      {/* HUD - Bottom Left */}
+      <div className="absolute bottom-4 left-4 z-10 flex gap-2">
+        <button
+          onClick={() => fitView({ duration: 800 })}
+          className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-md transition-colors text-sm font-medium shadow-xl"
+          title="Fit to View"
+        >
+          <Maximize className="w-4 h-4" />
+          Fit View
         </button>
       </div>
 
@@ -93,5 +113,11 @@ const FlowCanvas = () => {
     </div>
   );
 };
+
+const FlowCanvas = () => (
+  <ReactFlowProvider>
+    <FlowCanvasInternal />
+  </ReactFlowProvider>
+);
 
 export default FlowCanvas;
