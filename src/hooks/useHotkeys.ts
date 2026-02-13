@@ -10,6 +10,7 @@ export const useHotkeys = () => {
   const addBranch = useFlowStore((state) => state.addBranch);
   const addAIChild = useFlowStore((state) => state.addAIChild);
   const setDeletingNodeId = useFlowStore((state) => state.setDeletingNodeId);
+  const forceSave = useFlowStore((state) => state.forceSave);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -42,7 +43,15 @@ export const useHotkeys = () => {
         return;
       }
 
-      // 4. Trigger deletion modal for selected node
+
+      // 4. Save: Cmd+S or Ctrl+S
+      if (metaOrCtrl && key === 's') {
+        event.preventDefault();
+        forceSave();
+        return;
+      }
+
+      // 5. Trigger deletion modal for selected node
       if (event.key === 'Delete' || (event.key === 'Backspace' && event.metaKey)) {
         const selectedNodes = getNodes().filter((n) => n.selected);
         if (selectedNodes.length === 1) {
@@ -51,7 +60,7 @@ export const useHotkeys = () => {
         return;
       }
 
-      // 5. Cmd+Enter or Ctrl+Enter to branch from selected node
+      // 6. Cmd+Enter or Ctrl+Enter to branch from selected node
       if (metaOrCtrl && event.key === 'Enter') {
         event.preventDefault();
         const selectedNodes = getNodes().filter((n) => n.selected);
@@ -81,5 +90,5 @@ export const useHotkeys = () => {
 
     window.addEventListener('keydown', handleKeyDown, true); // Use capture phase to intercept
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [getNodes, addBranch, addAIChild, setCenter, setDeletingNodeId]);
+  }, [getNodes, addBranch, addAIChild, setCenter, setDeletingNodeId, forceSave]);
 };
