@@ -1,12 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 import { useFlowStore } from '../../store/useFlowStore';
 
 const ChatOverlay = () => {
-  const { editingNodeId, setEditingNodeId, nodes, updateNodeContent } = useFlowStore();
+  const { editingNodeId, setEditingNodeId, nodes, updateNodeContent, addAIChild } = useFlowStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const editingNode = nodes.find((n) => n.id === editingNodeId);
+  const isUser = editingNode?.data.type === 'user';
+  const hasContent = editingNode?.data.label.trim().length > 0;
 
   useEffect(() => {
     if (editingNodeId && textareaRef.current) {
@@ -24,6 +26,15 @@ const ChatOverlay = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [editingNodeId, setEditingNodeId]);
+
+  const handleSend = () => {
+    if (!editingNodeId || !hasContent) return;
+    
+    if (isUser) {
+      addAIChild(editingNodeId);
+    }
+    setEditingNodeId(null);
+  };
 
   if (!editingNodeId || !editingNode) return null;
 
@@ -60,6 +71,31 @@ const ChatOverlay = () => {
         {/* Footer */}
         <div className="px-6 py-3 border-t border-zinc-800 bg-zinc-900/50 text-zinc-500 text-xs flex justify-between items-center">
           <div>Esc to close • Changes auto-save</div>
+          <div className="flex items-center gap-3">
+            {isUser && (
+              <button
+                onClick={handleSend}
+                disabled={!hasContent}
+                className={`
+                  flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
+                  ${hasContent 
+                    ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-lg shadow-rose-500/20' 
+                    : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'}
+                `}
+              >
+                <Send className="w-4 h-4" />
+                <span>Send to AI</span>
+              </button>
+            )}
+            {!isUser && (
+              <button
+                onClick={() => setEditingNodeId(null)}
+                className="px-4 py-2 bg-zinc-800 text-zinc-200 hover:bg-zinc-700 rounded-lg font-medium transition-colors"
+              >
+                Done
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
