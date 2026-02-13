@@ -10,7 +10,7 @@ const ChatOverlay = () => {
 
   const editingNode = nodes.find((n) => n.id === editingNodeId);
   const isUser = editingNode?.data.type === 'user';
-  const hasContent = editingNode?.data.label.trim().length > 0;
+  const hasContent = (editingNode?.data.label?.trim().length ?? 0) > 0;
 
   useEffect(() => {
     if (editingNodeId && textareaRef.current) {
