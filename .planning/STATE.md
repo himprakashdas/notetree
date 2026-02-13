@@ -2,7 +2,7 @@
 
 ## Current Phase: Phase 2 (Core AI Integration)
 **Status**: Executing
-**Progress**: 3/5 Plans
+**Progress**: 4/5 Plans
 **Goal**: Enable the core "Tree Learning" value proposition with Gemini integration.
 
 ## Completed Milestones
@@ -16,9 +16,10 @@
 - [x] Phase 2: Plan 01 (API & Context Logic).
 - [x] Phase 2: Plan 02 (FIFO Queue & Background Generation Store).
 - [x] Phase 2: Plan 03 (Streaming UI & SDK Integration).
+- [x] Phase 2: Plan 04 (Error Handling & Retries).
 
 ## Active Tasks
-- [ ] phase-2-04-PLAN.md — Error Handling & Retries
+- [ ] phase-2-05-PLAN.md — Polish, Transitions & UI/UX Refinements
 
 ## Decisions
 - [x] Use Tailwind 4 for CSS-first styling.
@@ -40,6 +41,9 @@
 - [x] [Phase 2]: Capture context snapshot using current store state to avoid stale reads from debounced DB persistence
 - [x] [Phase 2]: Use a pulse animation and 'Thinking...' text for AI nodes during the generation process
 - [x] [Phase 2]: Throttle database persistence during streaming to every 10 chunks to balance performance and safety
+- [x] [Phase 2]: Use sonner for toast notifications
+- [x] [Phase 2]: 10s duration for critical errors
+- [x] [Phase 2]: Delete node on final AI generation failure
 
 ## Performance Metrics
 - **Phase 1.1 Plan 01**: 25m, 3 tasks, 4 files.
@@ -48,7 +52,8 @@
 - **Phase 2 Plan 01**: 40m, 5 tasks, 5 files.
 - **Phase 2 Plan 02**: 25m, 3 tasks, 3 files.
 - **Phase 2 Plan 03**: 20m, 3 tasks, 7 files.
+- **Phase 2 Plan 04**: 15m, 3 tasks, 3 files.
 
 ## Session Info
 - **Last session**: 2026-02-13
-- **Stopped at**: Completed 2-03-PLAN.md
+- **Stopped at**: Completed 2-04-PLAN.md
